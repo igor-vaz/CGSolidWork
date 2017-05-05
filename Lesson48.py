@@ -3,7 +3,9 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 import copy
+import random
 from math import cos, sin
+from plyfile import PlyData, PlyElement
 
 from ArcBall import * 				# ArcBallT and this tutorials set of points/vectors/matrix types
 
@@ -24,7 +26,9 @@ g_ThisRot = Matrix3fT ()
 g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
-
+plydata = PlyData.read('dodecaedro.ply')
+axis = plydata.elements[0].data
+edges = plydata.elements[1].data
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -43,8 +47,8 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	# Why? this tutorial never maps any textures?! ? 
 	# gluQuadricTexture(g_quadratic, GL_TRUE);			# // Create Texture Coords
 
-	glEnable (GL_LIGHT0)
-	glEnable (GL_LIGHTING)
+	# glEnable (GL_LIGHT0)
+	# glEnable (GL_LIGHTING)
 
 	glEnable (GL_COLOR_MATERIAL)
 
@@ -124,40 +128,43 @@ def Torus(MinorRadius, MajorRadius):
 	return
 
 
-def Cube():
+def Polygon():
 	
-	glBegin(GL_QUADS);
-	glColor3f(1.0,0.0,0.0)
-	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
-	glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
-	glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);
-	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0,  1.0);
-	glColor3f(0.0,1.0,0.0)
-	glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0, -1.0);
-	glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  1.0, -1.0);
-	glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0, -1.0);
-	glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0, -1.0);
-	glColor3f(0.0,0.0,1.0)
-	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0, -1.0);
-	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  1.0,  1.0);
-	glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  1.0,  1.0);
-	glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, -1.0);
-	glColor3f(1.0,1.0,0.0)
-	glTexCoord2f(1.0, 1.0); glVertex3f(-1.0, -1.0, -1.0);
-	glTexCoord2f(0.0, 1.0); glVertex3f( 1.0, -1.0, -1.0);
-	glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
-	glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
-	glColor3f(0.0,1.0,1.0)
-	glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0, -1.0);
-	glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, -1.0);
-	glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);
-	glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
-	glColor3f(1.0,0.0,1.0)
-	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0, -1.0);
-	glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
-	glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  1.0,  1.0);
-	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0, -1.0);
-	glEnd();
+	for edge in edges:
+		glBegin(GL_POLYGON)
+
+		glColor3f(random.random(),random.random(),random.random())
+		for e in edge:
+			for i in range(len(e)):
+				glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
+
+		glEnd();
+	# glColor3f(0.0,1.0,0.0)
+	# glVertex3f(-1.0, -1.0, -1.0);
+	# glVertex3f(-1.0,  1.0, -1.0);
+	# glVertex3f( 1.0,  1.0, -1.0);
+	# glVertex3f( 1.0, -1.0, -1.0);
+	# glColor3f(0.0,0.0,1.0)
+	# glVertex3f(-1.0,  1.0, -1.0);
+	# glVertex3f(-1.0,  1.0,  1.0);
+	# glVertex3f( 1.0,  1.0,  1.0);
+	# glVertex3f( 1.0,  1.0, -1.0);
+	# glColor3f(1.0,1.0,0.0)
+	# glVertex3f(-1.0, -1.0, -1.0);
+	# glVertex3f( 1.0, -1.0, -1.0);
+	# glVertex3f( 1.0, -1.0,  1.0);
+	# glVertex3f(-1.0, -1.0,  1.0);
+	# glColor3f(0.0,1.0,1.0)
+	# glVertex3f( 1.0, -1.0, -1.0);
+	# glVertex3f( 1.0,  1.0, -1.0);
+	# glVertex3f( 1.0,  1.0,  1.0);
+	# glVertex3f( 1.0, -1.0,  1.0);
+	# glColor3f(1.0,0.0,1.0)
+	# glVertex3f(-1.0, -1.0, -1.0);
+	# glVertex3f(-1.0, -1.0,  1.0);
+	# glVertex3f(-1.0,  1.0,  1.0);
+	# glVertex3f(-1.0,  1.0, -1.0);
+	
 	return
 
 
@@ -170,7 +177,7 @@ def Draw ():
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
 	glColor3f(0.75,0.75,1.0);
 	#Torus(0.30,1.00);
-	Cube();
+	Polygon();
 	glPopMatrix();													# // NEW: Unapply Dynamic Transform
 
 	# glLoadIdentity();												# // Reset The Current Modelview Matrix
