@@ -6,6 +6,8 @@ import copy
 import random
 from math import cos, sin
 from plyfile import PlyData, PlyElement
+from matrix import *
+from geometry import *
 
 from ArcBall import * 				# ArcBallT and this tutorials set of points/vectors/matrix types
 
@@ -30,9 +32,9 @@ plydata = PlyData.read('cube.ply')
 axis = plydata.elements[0].data
 edges = plydata.elements[1].data
 
-colorlist = []
-for i in range(len(edges)):
-	colorlist.append([random.random(),random.random(),random.random()])
+# colorlist = []
+# for i in range(len(edges)):
+# 	colorlist.append([random.random(),random.random(),random.random()])
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -133,46 +135,58 @@ def Torus(MinorRadius, MajorRadius):
 
 
 def Polygon():
-	i=0
-	for edge in edges:
-		glBegin(GL_POLYGON)
+	# i=0
+	# for edge in edges:
+	# 	glBegin(GL_POLYGON)
 
-		glColor3f(colorlist[i][0],colorlist[i][1],colorlist[i][2])
-		for e in edge:
-			for i in range(len(e)):
-				glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
+	# 	glColor3f(colorlist[i][0],colorlist[i][1],colorlist[i][2])
+	# 	for e in edge:
+	# 		for i in range(len(e)):
+	# 			glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
 
-		glEnd();
+	# 	glEnd();
+
+	glBegin(GL_QUADS)	
+	glColor3f(1.0,0.0,0.0)
+	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
+	glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
+	glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);
+	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0,  1.0);
 	# glColor3f(0.0,1.0,0.0)
-	# glVertex3f(-1.0, -1.0, -1.0);
-	# glVertex3f(-1.0,  1.0, -1.0);
-	# glVertex3f( 1.0,  1.0, -1.0);
-	# glVertex3f( 1.0, -1.0, -1.0);
-	# glColor3f(0.0,0.0,1.0)
-	# glVertex3f(-1.0,  1.0, -1.0);
-	# glVertex3f(-1.0,  1.0,  1.0);
-	# glVertex3f( 1.0,  1.0,  1.0);
-	# glVertex3f( 1.0,  1.0, -1.0);
+	# glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0, -1.0);
+	# glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  1.0, -1.0);
+	# glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0, -1.0);
+	# glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0, -1.0);
+	glColor3f(0.0,0.0,1.0)
+	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0, -1.0);
+	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  1.0,  1.0);
+	glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  1.0,  1.0);
+	glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, -1.0);
+	glEnd();
 	# glColor3f(1.0,1.0,0.0)
-	# glVertex3f(-1.0, -1.0, -1.0);
-	# glVertex3f( 1.0, -1.0, -1.0);
-	# glVertex3f( 1.0, -1.0,  1.0);
-	# glVertex3f(-1.0, -1.0,  1.0);
+	# glTexCoord2f(1.0, 1.0); glVertex3f(-1.0, -1.0, -1.0);
+	# glTexCoord2f(0.0, 1.0); glVertex3f( 1.0, -1.0, -1.0);
+	# glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
+	# glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
 	# glColor3f(0.0,1.0,1.0)
-	# glVertex3f( 1.0, -1.0, -1.0);
-	# glVertex3f( 1.0,  1.0, -1.0);
-	# glVertex3f( 1.0,  1.0,  1.0);
-	# glVertex3f( 1.0, -1.0,  1.0);
+	# glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0, -1.0);
+	# glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, -1.0);
+	# glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);
+	# glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
 	# glColor3f(1.0,0.0,1.0)
-	# glVertex3f(-1.0, -1.0, -1.0);
-	# glVertex3f(-1.0, -1.0,  1.0);
-	# glVertex3f(-1.0,  1.0,  1.0);
-	# glVertex3f(-1.0,  1.0, -1.0);
+	# glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0, -1.0);
+	# glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
+	# glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  1.0,  1.0);
+	# glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0, -1.0);
+
+	
 	
 	return
 
 
 def Draw ():
+	
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
 	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
@@ -180,18 +194,58 @@ def Draw ():
 	glPushMatrix();													# // NEW: Prepare Dynamic Transform
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
 	glColor3f(0.75,0.75,1.0);
-	#Torus(0.30,1.00);
+	# angle = 0
+	# for i in range(1,9):
+	# 	angle+=i
+	# 	glRotatef(angle,0.0,0.0,1.0);
+	# 	#Torus(0.30,1.00);
+	# 	Polygon();
+	# glRotatef(90,1.0,1.0,1.0);
+	# #Torus(0.30,1.00);
 	Polygon();
+
 	glPopMatrix();													# // NEW: Unapply Dynamic Transform
 
-	# glLoadIdentity();												# // Reset The Current Modelview Matrix
-	# glTranslatef(1.5,0.0,-6.0);										# // Move Right 1.5 Units And Into The Screen 7.0
+	glLoadIdentity();												# // Reset The Current Modelview Matrix
+	glTranslatef(3.0,0.0,-10.0);										# // Move Right 1.5 Units And Into The Screen 7.0
 
-	# glPushMatrix();													# // NEW: Prepare Dynamic Transform
-	# glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
-	# glColor3f(1.0,0.75,0.75);
-	# gluSphere(g_quadratic,1.3,20,20);
-	# glPopMatrix();													# // NEW: Unapply Dynamic Transform
+	glPushMatrix();													# // NEW: Prepare Dynamic Transform
+	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
+	glColor3f(1.0,0.75,0.75);
+	#gluSphere(g_quadratic,1.3,20,20);
+
+	p = Point(1.0,1.0,-1.0);
+	p2 = Point(-1.0,1.0,-1.0);
+	ax = Point(1.0,0.0,0.0);
+	TR = translateAndRotate(270,p,ax)
+	TR2 = translateAndRotate(270,p2,ax)
+	#print TR
+	# exit(0)
+	pn1 = dot([[p.x,p.y,p.z,0]],TR)	
+	pn2 = dot([p2.x,p2.y,p2.z,0],TR2)
+	
+	pn1 = pn1.tolist()[0]
+	#pn1 = pn1 + [2,2,2,0]
+	pn2 = pn2.tolist()[0]
+
+	pn1 = [pn1[0], pn1[1]+2, pn1[2]]
+	pn2 = [pn2[0], pn2[1]+2, pn2[2]]
+
+	glBegin(GL_QUADS)	
+	glColor3f(1.0,0.0,0.0)
+	glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0,  1.0);
+	glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0,  1.0);
+	glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);
+	glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0,  1.0);
+
+	glColor3f(0.0,0.0,1.0)
+	glVertex3f(pn2[0],  pn2[1], pn2[2]);
+	glVertex3f(-1.0,  1.0,  1.0);
+	glVertex3f( 1.0,  1.0,  1.0);
+	glVertex3f(pn1[0],  pn1[1], pn1[2]);
+	glEnd();
+
+	glPopMatrix();													# // NEW: Unapply Dynamic Transform
 
 	glFlush ();														# // Flush The GL Rendering Pipeline
 	glutSwapBuffers()
