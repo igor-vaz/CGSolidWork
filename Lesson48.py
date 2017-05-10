@@ -26,9 +26,13 @@ g_ThisRot = Matrix3fT ()
 g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
-plydata = PlyData.read('dodecaedro.ply')
+plydata = PlyData.read('cube.ply')
 axis = plydata.elements[0].data
 edges = plydata.elements[1].data
+
+colorlist = []
+for i in range(len(edges)):
+	colorlist.append([random.random(),random.random(),random.random()])
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -129,11 +133,11 @@ def Torus(MinorRadius, MajorRadius):
 
 
 def Polygon():
-	
+	i=0
 	for edge in edges:
 		glBegin(GL_POLYGON)
 
-		glColor3f(random.random(),random.random(),random.random())
+		glColor3f(colorlist[i][0],colorlist[i][1],colorlist[i][2])
 		for e in edge:
 			for i in range(len(e)):
 				glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
@@ -171,7 +175,7 @@ def Polygon():
 def Draw ():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
-	glTranslatef(0.0,0.0,-6.0);									# // Move Left 1.5 Units And Into The Screen 6.0
+	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
 
 	glPushMatrix();													# // NEW: Prepare Dynamic Transform
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
