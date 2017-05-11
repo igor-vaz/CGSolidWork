@@ -1,9 +1,48 @@
+# /***********************************************
+# *                                              *
+# *    Jeff Molofee's Revised OpenGL Basecode    *
+# *  Huge Thanks To Maxwell Sayles & Peter Puck  *
+# *            http://nehe.gamedev.net           *
+# *                     2001                     *
+# *            Adapted to PyOpenGL GLUT          *
+# *                                              *
+# ***********************************************/
+#
+# NeHe Tutorial Lesson: 48 - ArcBall Rotation
+#
+# C version of tutorial by Terence J. Grant
+# This code was created by Jeff Molofee 2000
+# Ported to PyOpenGL 2.0 by Brian Leair 2004
+#
+# The port was based on the PyOpenGL tutorials and from 
+# PyOpenGLContext (tests/glprint.py)
+#
+# If you've found this code useful, feel free to let me know 
+# at (Brian Leair telcom_sage@yahoo.com).
+#
+# See original source and C based tutorial at http://nehe.gamedev.net
+#
+# Note:
+# -----
+# This code is not an ideal example of Pythonic coding or use of OO 
+# techniques. It is a simple and direct exposition of how to use the 
+# Open GL API in Python via the PyOpenGL package. It also uses GLUT, 
+# a high quality platform independent library. Due to using these APIs, 
+# this code is more like a C program using procedural programming.
+#
+# To run this example you will need:
+# Python 	- www.python.org (v 2.3 as of 1/2004)
+# PyOpenGL 	- pyopengl.sourceforge.net (v 2.0.1.07 as of 1/2004)
+# Numeric Python	- (v.22 of "numpy" as of 1/2004) numpy.sourceforge.net
+#
+#
+
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 
-from Lesson48 import *		# Draw (), Initialize () and all the real OpenGL work.
+from Cubo import *		# Draw (), Initialize () and all the real OpenGL work.
 from ArcBall import *		# // *NEW* ArcBall header
 
 
@@ -22,6 +61,12 @@ ESCAPE = '\033'
 
 # Number of the glut window.
 window = 0
+
+
+
+
+
+
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitGL(Width, Height):				# We call this right after our OpenGL window is created.
@@ -89,7 +134,7 @@ def main():
 	# Okay, like the C version we retain the window id to use when closing, but for those of you new
 	# to Python, remember this assignment would make the variable local and not global
 	# if it weren't for the global declaration at the start of main.
-	window = glutCreateWindow("Lesson 48: NeHe ArcBall Rotation Tutorial")
+	window = glutCreateWindow("Trabalho de CG")
 
    	# Register the drawing function with glut, BUT in Python land, at least using PyOpenGL, we need to
 	# set the function pointer and invoke a function to actually register the callback, otherwise it

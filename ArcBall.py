@@ -1,3 +1,27 @@
+"""
+ArcBall.py -- Math utilities, vector, matrix types and ArcBall quaternion rotation class
+
+>>> unit_test_ArcBall_module ()
+unit testing ArcBall
+Quat for first drag
+[ 0.08438914 -0.08534209 -0.06240178  0.99080837]
+First transform
+[[ 0.97764552 -0.1380603   0.15858325  0.        ]
+ [ 0.10925253  0.97796899  0.17787792  0.        ]
+ [-0.17964739 -0.15657592  0.97119039  0.        ]
+ [ 0.          0.          0.          1.        ]]
+LastRot at end of first drag
+[[ 0.97764552 -0.1380603   0.15858325]
+ [ 0.10925253  0.97796899  0.17787792]
+ [-0.17964739 -0.15657592  0.97119039]]
+Quat for second drag
+[ 0.00710336  0.31832787  0.02679029  0.94757545]
+Second transform
+[[ 0.88022292 -0.08322023 -0.46720669  0.        ]
+ [ 0.14910145  0.98314685  0.10578787  0.        ]
+ [ 0.45052907 -0.16277808  0.8777966   0.        ]
+ [ 0.          0.          0.          1.00000001]]
+"""
 
 try:
 	import numpy as Numeric
