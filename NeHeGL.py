@@ -62,12 +62,6 @@ ESCAPE = '\033'
 # Number of the glut window.
 window = 0
 
-
-
-
-
-
-
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitGL(Width, Height):				# We call this right after our OpenGL window is created.
 

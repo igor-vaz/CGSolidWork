@@ -34,6 +34,7 @@ axis = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
 
+polygons=[]
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -92,12 +93,23 @@ def generate_graph():
 	print(g)    
 	return
 
+def getMouse(cursor_x, cursor_y, z):
+	modelView = glGetDoublev( GL_MODELVIEW_MATRIX );
+	projection = glGetDoublev( GL_PROJECTION_MATRIX );
+	viewport = glGetIntegerv( GL_VIEWPORT );
+	cursor_x = float (cursor_x);
+	cursor_y = float (viewport[3]) - float (cursor_y);
+	cursor_z = glReadPixels(cursor_x, cursor_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
+	posX, posY, posZ = gluUnProject(cursor_x, cursor_y, cursor_z, modelView, projection, viewport);
+	return posX, posY, posZ;
+
 
 def Upon_Drag (cursor_x, cursor_y):
 	""" Mouse cursor is moving
 		Glut calls this function (when mouse button is down)
 		and pases the mouse cursor postion in window coords as the mouse moves.
 	"""
+	
 	global g_isDragging, g_LastRot, g_Transform, g_ThisRot
 
 	if (g_isDragging):
@@ -114,7 +126,9 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		Glut calls this function when a mouse button is
 		clicked or released.
 	"""
-	global g_isDragging, g_LastRot, g_Transform, g_ThisRot
+
+	
+	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons
 
 	g_isDragging = False
 	if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
@@ -126,11 +140,28 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		# Left button released
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):
+		# Cria os pontos de clique do mouse
+		x1,y1,z1 = getMouse(cursor_x,cursor_y,-1)
+		p1 = p1 = Point(x1,y1,0)
+		x2,y2,z2 = getMouse(cursor_x,cursor_y,1)
+		p2 = p2 = Point(x2,y2,1)
+		# Cria linha entre os dois pontos
+		line = Line(p1,p2)
+		print line
+		#aplicar matriz de rotacao g_ThisRot na linha
+		# line = dot(g_ThisRot,line.tolist())
+		# #ver as faces q cortam a linha
+		# intersecs = []
+		# for polygon in polygons:
+		# 	intersecs.append(line.intersectToPlane(polygon))
+		# print intersecs
+	
 		# Left button clicked down
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
 		g_isDragging = True											# // Prepare For Dragging
 		mouse_pt = Point2fT (cursor_x, cursor_y)
 		g_ArcBall.click (mouse_pt);								# // Update Start Vector And Prepare For Dragging
+
 
 	return
 
@@ -221,8 +252,6 @@ def Draw ():
 	#Polygon();
 	#Cube();
 
-
-
 	glBegin(GL_LINES)
 	glColor3f(1.0,0.0,0.0)
 	glVertex2f(0.0, 0.0)
@@ -249,21 +278,19 @@ def Draw ():
 	#glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 	
 
-
-
 	## JOSH MODE ON
 
 	##### MATRIZ DO POLIGONO
-	polygon = [[ 0.5, -0.5, 0.5, 1],
-				 [ 0.5,  0.5, 0.5, 1],
-				 [-0.5,  0.5, 0.5, 1],
-				 [-0.5, -0.5, 0.5, 1]];
+	polygons = [[ 0.5, -0.5, 0.5, 1],
+			[ 0.5,  0.5, 0.5, 1],
+			[-0.5,  0.5, 0.5, 1],
+			[-0.5, -0.5, 0.5, 1]];
 	
 
 	##### POLIGONO VERDE INICIAL
 	glBegin(GL_POLYGON);
 	glColor3f( 0.0, 1.0, 0.0 ); # verde
-	for line in polygon:
+	for line in polygons:
 		glVertex3f(  line[1-1], line[2-1], line[3-1] );     
 	glEnd(); 
 
@@ -277,29 +304,22 @@ def Draw ():
 
 
 	##### TRANSFORMACOES APLICADAS EM CADA VERTICE
-	polygon[0] = dot(TR, polygon[0]).tolist()[0]
-	polygon[1] = dot(TR, polygon[1]).tolist()[0]
-	polygon[2] = dot(TR, polygon[2]).tolist()[0]
-	polygon[3] = dot(TR, polygon[3]).tolist()[0]
+	polygons[0] = dot(TR, polygons[0]).tolist()[0]
+	polygons[1] = dot(TR, polygons[1]).tolist()[0]
+	polygons[2] = dot(TR, polygons[2]).tolist()[0]
+	polygons[3] = dot(TR, polygons[3]).tolist()[0]
 
 	
 	##### POLIGONO VERMELHO TRANSFORMADO
 	glBegin(GL_POLYGON);
 	glColor3f( 1.0, 0.0, 0.0 ); # vermelho
-	for line in polygon:
+	for line in polygons:
 		glVertex3f(  line[1-1], line[2-1], line[3-1] );     
 	glEnd(); 
 
 	## JOSH MODE OFF
 
-
-
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
-
-
-
-
-	
 
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
 	glTranslatef(0.0,0.0,-6.0);										# // Move Right 1.5 Units And Into The Screen 7.0
