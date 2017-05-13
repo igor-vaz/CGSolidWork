@@ -3,7 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 
-from Cubo import *		# Draw (), Initialize () and all the real OpenGL work.
+from rotatecubo import *		# Draw (), Initialize () and all the real OpenGL work.
 from ArcBall import *		# // *NEW* ArcBall header
 
 
