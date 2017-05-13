@@ -30,32 +30,22 @@ g_ThisRot = Matrix3fT ()
 g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
-plydata = PlyData.read('cube.ply')
-axis = plydata.elements[0].data
+plydata = PlyData.read('dodecaedro.ply')
+pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
 a = 0
-points=[]
 polygons=[]
 
-#CRIA LISTA COM AS TRIPLAS
+# Cria os poligonos e adiciona na lista
 for edge in edges:
 		for e in edge:
+			points=[]
 			for i in range(len(e)):
-				points.append(axis[e[i]])
+				points.append(Point(pontos[e[i]][0],pontos[e[i]][1],pontos[e[i]][2]))
+			polygons.append(Polygon(points))
 
-#cria lista auxiliar com objetos Point
-aux=[]
-for point in points:
-	aux.append(Point(point[0],point[1],point[2]))
 
-#cria lista de poligonos
-#TODO: tentar generalizar para qualquer poligono
-i=0
-while(i<=len(aux)-4):
-	polygons.append(Polygon([aux[i], aux[i+1], aux[i+2], aux[i+3]]))
-	i+=4				
-#print(polygons)
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
 	global g_quadratic
@@ -199,7 +189,7 @@ def DrawPolygon():
 		# glColor3f(colors[face][0], colors[face][1], colors[face][2]);
 	# 	for e in edge:
 	# 		for i in range(len(e)):
-	# 			glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
+	# 			glVertex3f(pontos[e[i]][0], pontos[e[i]][1],  pontos[e[i]][2]);
 
 	# 	glEnd();
 	for polygon in polygons:
@@ -398,8 +388,8 @@ def Draw ():
 	# glTranslatef(1,0,0)
 	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 	
-	#DrawPolygon()
-	rotateAndDraw(polygons[4]);
+	DrawPolygon()
+	# rotateAndDraw(polygons[4]);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
 
