@@ -30,6 +30,7 @@ g_ThisRot = Matrix3fT ()
 g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
+line = Line(Point(0,0,0.1),Point(0,0,0))
 plydata = PlyData.read('dodecaedro.ply')
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
@@ -138,7 +139,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	"""
 
 	
-	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons
+	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, line
 
 	g_isDragging = False
 	if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
@@ -149,31 +150,40 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_UP):
 		# Left button released
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
-	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):
-		# Cria os pontos de clique do mouse
-		x1,y1,z1 = getMouse(cursor_x,cursor_y,-1)
-		# p1 = p1 = Point(x1,y1,0)
-		x2,y2,z2 = getMouse(cursor_x,cursor_y,1)
-		# p2 = p2 = Point(x2,y2,1)
+
+
+		# Obtem os pontos de clique do mouse
+		xm,ym,zm = getMouse(cursor_x,cursor_y, 0)
+
+		# Transforma os pontos de click do mouse
+		p1 = dot(g_ThisRot,[xm,ym,-100])
+		p2 = dot(g_ThisRot,[xm,ym,100])
+		
 		# Cria linha entre os dois pontos
-		p1 = dot(g_ThisRot,[x1,y1,0])
-		p2 = dot(g_ThisRot,[x2,y2,1])
 		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
-		
-		#aplicar matriz de rotacao g_ThisRot nos pontos
-		
-		# #ver as faces q cortam a linha
-		intersecs = []
+
+		### Pegar o poligono selecionado
+		selectedPolygon = False
+		z = -999
 		for polygon in polygons:
-			intersecs.append(line.intersectToPlane(polygon))
-		print intersecs
-	
+			# Obtem dados sobre intercessao de um poligono na linha do click
+			intersec = polygon.doesLineCrossPolygon(line)
+			# Se a intercessao da linha for true
+			# e o z do ponto interceptado for maior que o z anterior,
+			# atualiza novo poligono e z mais na frente
+			if intersec[0] and intersec[1][2] > z:
+				selectedPolygon = polygon
+				z = intersec[1][2]
+
+		# DEBUG: printar o poligono selecionado
+		print selectedPolygon
+
+	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):	
 		# Left button clicked down
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
 		g_isDragging = True											# // Prepare For Dragging
 		mouse_pt = Point2fT (cursor_x, cursor_y)
 		g_ArcBall.click (mouse_pt);								# // Update Start Vector And Prepare For Dragging
-
 
 	return
 
@@ -363,23 +373,44 @@ def Draw ():
 	# DrawPolygon();
 	#Cube();
 
+	### Eixo global x vermelho
 	glBegin(GL_LINES)
 	glColor3f(1.0,0.0,0.0)
 	glVertex2f(0.0, 0.0)
 	glVertex2f(2.0, 0.0)
 	glEnd()
 
+	### Eixo global y amarelo
 	glBegin(GL_LINES)
 	glColor3f(1.0,1.0,0.0)
 	glVertex2f(0.0, 0.0)
 	glVertex2f(0.0, 2.0)
 	glEnd()
 
+	### Eixo global z magenta
 	glBegin(GL_LINES)
 	glColor3f(1.0,0.0,1.0)
 	glVertex3f(0.0, 0.0, 0.0)
 	glVertex3f(0.0, 0.0, 2.0)
 	glEnd()
+
+	### Linha de pick (line global)
+	glBegin(GL_LINES)
+	glColor3f(1.0,1.0,1.0)
+	glVertex3f(line.p1[0], line.p1[1], line.p1[2])
+	glVertex3f(line.p2[0], line.p2[1], line.p2[2])
+	glEnd()
+
+
+
+	### Normal do primeiro poligono
+	polygon_test = polygons[0]
+	glBegin(GL_LINES)
+	glColor3f(0.0,1.0,1.0)
+	glVertex3f(0.0, 0.0, 0.0)
+	glVertex3f(-polygon_test.compNormal()[0], -polygon_test.compNormal()[1], -polygon_test.compNormal()[2])
+	glEnd()
+
 
 
 	#r = [0.5 - 0.5, 0.5 + 0.5, 0.5 - 0.5]
