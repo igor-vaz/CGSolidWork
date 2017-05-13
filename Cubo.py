@@ -34,7 +34,26 @@ axis = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
 
+points=[]
 polygons=[]
+
+#CRIA LISTA COM AS TRIPLAS
+for edge in edges:
+		for e in edge:
+			for i in range(len(e)):
+				points.append(axis[e[i]])
+
+#cria lista auxiliar com objetos Point
+aux=[]
+for point in points:
+	aux.append(Point(point[0],point[1],point[2]))
+
+#cria lista de poligonos
+#TODO: tentar generalizar para qualquer poligono
+i=0
+while(i<=len(aux)-4):
+	polygons.append(Polygon([aux[i], aux[i+1], aux[i+2], aux[i+3]]))
+	i+=4				
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -142,19 +161,21 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):
 		# Cria os pontos de clique do mouse
 		x1,y1,z1 = getMouse(cursor_x,cursor_y,-1)
-		p1 = p1 = Point(x1,y1,0)
+		# p1 = p1 = Point(x1,y1,0)
 		x2,y2,z2 = getMouse(cursor_x,cursor_y,1)
-		p2 = p2 = Point(x2,y2,1)
+		# p2 = p2 = Point(x2,y2,1)
 		# Cria linha entre os dois pontos
-		line = Line(p1,p2)
-		print line
-		#aplicar matriz de rotacao g_ThisRot na linha
-		# line = dot(g_ThisRot,line.tolist())
+		p1 = dot(g_ThisRot,[x1,y1,0])
+		p2 = dot(g_ThisRot,[x2,y2,1])
+		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
+		
+		#aplicar matriz de rotacao g_ThisRot nos pontos
+		
 		# #ver as faces q cortam a linha
-		# intersecs = []
-		# for polygon in polygons:
-		# 	intersecs.append(line.intersectToPlane(polygon))
-		# print intersecs
+		intersecs = []
+		for polygon in polygons:
+			intersecs.append(line.intersectToPlane(polygon))
+		print intersecs
 	
 		# Left button clicked down
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
@@ -166,19 +187,25 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	return
 
 
-def Polygon():
+def DrawPolygon():
 	colors = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
 	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0]];
 	face = 0;
-	for edge in edges:
+	# for edge in edges:
+		# glBegin(GL_POLYGON);
+		# glColor3f(colors[face][0], colors[face][1], colors[face][2]);
+	# 	for e in edge:
+	# 		for i in range(len(e)):
+	# 			glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
+
+	# 	glEnd();
+	for polygon in polygons:
 		glBegin(GL_POLYGON);
 		glColor3f(colors[face][0], colors[face][1], colors[face][2]);
-		for e in edge:
-			for i in range(len(e)):
-				glVertex3f(axis[e[i]][0], axis[e[i]][1],  axis[e[i]][2]);
-
+		for point in polygon.points:
+			glVertex3f(point.x,point.y,point.z)
 		glEnd();
 		face = face + 1;
 	return
@@ -248,8 +275,8 @@ def Draw ():
 
 	glPushMatrix();													# // NEW: Prepare Dynamic Transform
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
-	#glColor3f(0.0,0.0,0.0);
-	#Polygon();
+	# glColor3f(0.0,0.0,0.0);
+	# DrawPolygon();
 	#Cube();
 
 	glBegin(GL_LINES)
@@ -272,10 +299,10 @@ def Draw ():
 
 
 	r = [0.5 - 0.5, 0.5 + 0.5, 0.5 - 0.5]
-	#glRotatef(90,1.0,0.0,0.0);
-	#glRotatef(90,0.5,-0.5,0.5);
-	#glTranslatef(1,0,0)
-	#glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+	# glRotatef(90,1.0,0.0,0.0);
+	# glRotatef(90,0.5,-0.5,0.5);
+	# glTranslatef(1,0,0)
+	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 	
 
 	## JOSH MODE ON
@@ -287,7 +314,7 @@ def Draw ():
 			[-0.5, -0.5, 0.5, 1]];
 	
 
-	##### POLIGONO VERDE INICIAL
+	# ##### POLIGONO VERDE INICIAL
 	glBegin(GL_POLYGON);
 	glColor3f( 0.0, 1.0, 0.0 ); # verde
 	for line in polygons:
