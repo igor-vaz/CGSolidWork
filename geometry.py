@@ -367,6 +367,10 @@ class Polygon(object):
         ## normal vector of the given polygon
         self.normal = self.compNormal().normalize()
 
+        self.edges = {}
+
+        self.matrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+ 
     def __repr__(self):
         """String representation of this polygon.""" 
 

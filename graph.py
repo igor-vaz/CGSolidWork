@@ -35,7 +35,7 @@ class Graph(object):
         """ assumes that edge is of type set, tuple or list; 
             between two vertices can be multiple edges! 
         """
-        edge = set(edge)
+        # edge = set(edge)
         (vertex1, vertex2) = tuple(edge)
         if vertex1 in self.__graph_dict:
             self.__graph_dict[vertex1].append(vertex2)
@@ -64,6 +64,30 @@ class Graph(object):
             res += str(edge) + " "
         return res
 
+    def breadth_first_search(self, root):
+        rotate_order = []
+        # TODO Fazer isso generico para o numero
+        parent = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1] 
+        visited_node = [0,0,0,0,0,0,0,0,0,0,0,0]
+        visited_node[root] = 1
+        queue = []
+        queue.append(root)
+        while len(queue) != 0 :
+            v = queue[0]
+            for neighbour in self.__graph_dict[v]:
+                # print(queue)
+                if visited_node[neighbour] == 0:
+                    visited_node[neighbour] = 1
+                    queue.append(neighbour)
+                    rotate_order.append(neighbour)
+                    parent[neighbour] = v
+                elif neighbour in queue:
+                    pass
+                    # print('estou aqui')
+                    #visitar aresta
+            del queue[queue.index(v)]        
+        return { 'order':rotate_order, 'parent':parent}
+
     def find_path(self, start_vertex, end_vertex, path=None):
         """ find a path from start_vertex to end_vertex 
             in graph """
@@ -84,8 +108,40 @@ class Graph(object):
                     return extended_path
         return None
 
-    
+    def check_adjacent_face_has_vertices(self, faces, index, v1,v2, polygons):
+        i = 0;
+        l = []
+        for face in faces:
+            if i != index:
+                count = 0;
+                l = []
+                for vertice in face:
+                    if vertice == v1 or vertice == v2:
+                        count = count + 1
+                        l.append(vertice)
+                if count == 2:                    
+                    polygons[index].edges[i] = l
+                    return i;
+            i = i+1;
 
+    def generate_graph(self, g, edges, polygons):
+        i = 0;
+        faces = [];
+        for edge in edges :
+            faces.append(edges[i][0].tolist())
+            g[i] = [] 
+            i = i+1 
+        
+        i=0;
+        for face in faces:
+            for vertice in range(len(face)-1):
+                viz = self.check_adjacent_face_has_vertices(faces,i,face[vertice],face[vertice+1],polygons)
+                self.add_edge([i,viz])
+            viz = self.check_adjacent_face_has_vertices(faces,i,face[vertice+1],face[0],polygons)
+            self.add_edge([i,viz])   
+            i=i+1
+        #print(g)    
+        return
 
 if __name__ == "__main__":
 

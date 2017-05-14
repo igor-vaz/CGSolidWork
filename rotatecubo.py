@@ -5,9 +5,9 @@ import sys
 import copy
 import random
 from time import sleep
-from math import cos, sin
+from math import cos, sin, degrees, acos
 from plyfile import PlyData, PlyElement
-from graph import Graph
+from graph import *
 from matrix import *
 from geometry import *
 
@@ -30,10 +30,11 @@ g_ThisRot = Matrix3fT ()
 g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
-plydata = PlyData.read('dodecaedro.ply')
+plydata = PlyData.read('cube.ply')
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
+
 a = 0
 polygons=[]
 
@@ -45,7 +46,8 @@ for edge in edges:
 				points.append(Point(pontos[e[i]][0],pontos[e[i]][1],pontos[e[i]][2]))
 			polygons.append(Polygon(points))
 
-
+graph = Graph(g)
+graph.generate_graph(g, edges, polygons)
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
 	global g_quadratic
@@ -68,40 +70,9 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 
 	glEnable (GL_COLOR_MATERIAL)
 	
-	generate_graph()
+	
 	return True
 
-def check_adjacent_face_has_vertices(faces, index, v1,v2):
-    i = 0;
-    for face in faces:
-        if i != index:
-            count = 0;
-            for vertice in face:
-                if vertice == v1 or vertice == v2:
-                    count = count + 1
-            if count == 2:
-                return i;
-        i = i+1;
-
-def generate_graph():
-	i = 0;
-	faces = [];
-	for edge in edges :
-	    faces.append(edges[i][0].tolist())
-	    g[i] = [] 
-	    i = i+1
-	
-	graph = Graph(g)
-	i=0;
-	for face in faces:
-	    for vertice in range(len(face)-1):
-	        viz = check_adjacent_face_has_vertices(faces,i,face[vertice],face[vertice+1])
-	        graph.add_edge({i,viz})
-	    viz = check_adjacent_face_has_vertices(faces,i,face[0],face[vertice+1])
-	    graph.add_edge({i,viz})   
-	    i=i+1
-	#print(g)    
-	return
 
 def getMouse(cursor_x, cursor_y, z):
 	modelView = glGetDoublev( GL_MODELVIEW_MATRIX );
@@ -300,27 +271,38 @@ def josh():
 	## JOSH MODE OFF
 	return
 
-def rotateAndDraw(polygon):
-	basic_axis = {'x': Point(1.0,0.0,0.0), 'y': Point(0.0,1.0,0.0), 'z': Point(0.0,0.0,1.0)}
+def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=None):	
 	global a
 	b=0
-	if a > 90:
+	sense = rotate_axis.tripleProd(origen_polygon.normal,polygon.normal)
+	n = len(polygons)
+	dot_prod = origen_polygon.normal.dotProd(polygon.normal)
+	if dot_prod == 0.0:
+		angulo = 90
+	else:
+		aux = dot_prod/origen_polygon.normal.len()*polygon.normal.len()
+		angulo = math.degrees(math.acos(aux))
+	if a > angulo*(n-1):
 		b = 0
-		print(polygon)
+		# print(polygon)
 		#a -= 2
 	elif a >=0:
-		b = 2
-		a += 2
-
+		b = -(0.5*sense)
+		a += 0.5
 	
 	##### PREPARA MATRIZ DE TRANSFORMACAO
 	## DEFINE PONTO DO EIXO DE ROTACAO TRANSLADADO
-	p = Point(1.0, 1.0, 1.0); ##Usando rotate_point
+	##p = Point(1.0, 1.0, 1.0); ##Usando rotate_point
 	## DEFINE QUAL SERA O EIXO DE ROTACAO
 	##p_axis = Point(1.0, 0.0, 0.0); Usando rotate axis
-	TR = translateAndRotate(b, p, basic_axis['x'])
+	TR = translateAndRotate(b, rotate_point, rotate_axis)
+	# print(TR)
+	# print(matrix)
+	if matrix!=None:
+		# TR = dot(TR, polygon.matrix)
+		TR = dot(TR, matrix) 
 	#polygons[0] = Polygon([Point(1.0,1.0,1.0),Point(2.0,2.0,2.0),Point(3.0,3.0,3.0)])
-
+	polygon.matrix = TR
 	##### TRANSFORMACOES APLICADAS EM CADA VERTICE
 	#print(polygon.points)
 	
@@ -337,25 +319,45 @@ def rotateAndDraw(polygon):
 
 	# print(polygon.points)
 	# exit();
-	DrawPolygon();
 	#exit();
 
-def rotateDede():
-	basic_axis = {'x': Point(1.0,0.0,0.0), 'y': Point(0.0,1.0,0.0), 'z': Point(0.0,0.0,1.0)}
+def rotateDede(root):	
+	l = graph.breadth_first_search(root)
+	
+	for i in l['order']:
+		parent = l['parent'][i]		
+		aux_axis = polygons[parent].normal.crossProd(polygons[i].normal)
+		aux2 = pontos[polygons[parent].edges[i][0]]
+		aux_p = Point(aux2[0],aux2[1],aux2[2])
+		if parent == root:
+			rotateAndDraw(polygons[i], polygons[parent], aux_p, aux_axis)
+		else:
+			rotateAndDraw(polygons[i], polygons[parent], aux_p, aux_axis, polygons[parent].matrix)
+	# exit()
+	DrawPolygon();		
+	# exit();
 
-	for polygon in polygons:
-		glBegin(GL_POLYGON);
-		glColor3f(colors[face][0], colors[face][1], colors[face][2]);
-		for point in polygon.points:
-			glVertex3f(point.x,point.y,point.z)
-		glEnd();
-		face = face + 1;
-	return
+
+
+	# rotateAndDraw(polygons[4], polygons[1],Point(1.0, 1.0, 1.0),basic_axis['x'])
+	# rotateAndDraw(polygons[5], polygons[1],Point(1.0, -1.0, 1.0),basic_axis['x'])
+	# rotateAndDraw(polygons[2], polygons[1],Point(1.0, -1.0, 1.0),basic_axis['y'])
+	# rotateAndDraw(polygons[3], polygons[1],Point(-1.0, -1.0, 1.0),basic_axis['y'])
+
+	# for polygon in polygons:
+	# 	glBegin(GL_POLYGON);
+	# 	glColor3f(colors[face][0], colors[face][1], colors[face][2]);
+	# 	for point in polygon.points:
+	# 		glVertex3f(point.x,point.y,point.z)
+	# 	glEnd();
+	# 	face = face + 1;
+	# return
 
 def Draw ():
+	# rotateDede(1)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
-	glTranslatef(0.0,0.0,-6.0);									# // Move Left 1.5 Units And Into The Screen 6.0
+	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
 
 	glPushMatrix();													# // NEW: Prepare Dynamic Transform
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
@@ -388,8 +390,8 @@ def Draw ():
 	# glTranslatef(1,0,0)
 	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 	
-	DrawPolygon()
-	# rotateAndDraw(polygons[4]);
+	#DrawPolygon()
+	rotateDede(2);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
 

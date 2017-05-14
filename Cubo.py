@@ -53,7 +53,7 @@ for point in points:
 i=0
 while(i<=len(aux)-4):
 	polygons.append(Polygon([aux[i], aux[i+1], aux[i+2], aux[i+3]]))
-	i+=4				
+	i+=4		
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -165,7 +165,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		x2,y2,z2 = getMouse(cursor_x,cursor_y,1)
 		# p2 = p2 = Point(x2,y2,1)
 		# Cria linha entre os dois pontos
-		p1 = dot(g_ThisRot,[x1,y1,0])
+		p1 = dot(g_ThisRot,[x1,y1,-1])
 		p2 = dot(g_ThisRot,[x2,y2,1])
 		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
 		

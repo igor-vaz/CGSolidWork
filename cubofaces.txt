@@ -1,0 +1,6 @@
+0 - Face Traseira
+1 - Face frontal
+2 - lateral direita
+3 - lateral esquerda
+4 - superior
+5 - inferior
