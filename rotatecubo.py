@@ -163,20 +163,20 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
 
 		### Pegar o poligono selecionado
-		selectedPolygon = False
+		selectedPolygonIndex = False
 		z = -999
-		for polygon in polygons:
+		for index in range(len(polygons)):
 			# Obtem dados sobre intercessao de um poligono na linha do click
-			intersec = polygon.doesLineCrossPolygon(line)
+			intersec = polygons[index].doesLineCrossPolygon(line)
 			# Se a intercessao da linha for true
 			# e o z do ponto interceptado for maior que o z anterior,
 			# atualiza novo poligono e z mais na frente
 			if intersec[0] and intersec[1][2] > z:
-				selectedPolygon = polygon
+				selectedPolygonIndex = index
 				z = intersec[1][2]
 
 		# DEBUG: printar o poligono selecionado
-		print selectedPolygon
+		print selectedPolygonIndex
 
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):	
 		# Left button clicked down
