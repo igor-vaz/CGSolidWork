@@ -65,7 +65,6 @@ for edge in edges:
 colors = []
 for i in range(len(polygons)):
 	colors.append([rd.random(),rd.random(),rd.random()])
-print colors
 
 stop_criteria = [0] * len(polygons)
 
@@ -153,7 +152,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 				z = intersec[2]
 
 		# DEBUG: printar o poligono selecionado
-		print "SELECTED FACE: " + str(selectedPolygonIndex)
+		# print "SELECTED FACE: " + str(selectedPolygonIndex)
 
 		# g_LastRot = Matrix3fSetIdentity ();							# // Reset Rotation
 		# g_ThisRot = Matrix3fSetIdentity ();							# // Reset Rotation
@@ -221,7 +220,7 @@ def rotateAndDraw(polygon, origen_polygon, index, rotate_point, rotate_axis, mat
 		polygon.points[x].z = result_matrix[2]
 	polygon.normal = polygon.compNormal().normalize()
 
-def rotateDede(root):	
+def rotatePolygonByRoot(root):	
 	l = graph.breadth_first_search(root)
 	
 	for i in l['order']:
@@ -240,7 +239,7 @@ def rotateDede(root):
 	DrawPolygon();
 
 def Draw ():
-	# rotateDede(1)
+	# rotatePolygonByRoot(1)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
 	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
@@ -272,8 +271,8 @@ def Draw ():
 	if selectedPolygonIndex == None or selectedPolygonIndex == False:
 		DrawPolygon()
 	else:
-		print selectedPolygonIndex
-		rotateDede(selectedPolygonIndex);
+		# print selectedPolygonIndex
+		rotatePolygonByRoot(selectedPolygonIndex);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
 
