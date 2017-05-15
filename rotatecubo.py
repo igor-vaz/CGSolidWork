@@ -189,12 +189,14 @@ def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=Non
 	sense = rotate_axis.tripleProd(origen_polygon.normal,polygon.normal)
 	n = len(polygons)
 	dot_prod = origen_polygon.normal.dotProd(polygon.normal)
-	if dot_prod == 0.0:
-		angulo = 90
-	else:
-		aux = dot_prod/origen_polygon.normal.len()*polygon.normal.len()
-		angulo = math.degrees(math.acos(aux))
-	if a > angulo*(n-1):
+	# if dot_prod == 0.0:
+	# 	angulo = 90
+	# else:
+	aux = dot_prod/origen_polygon.normal.len()*polygon.normal.len()
+	angulo = math.degrees(math.acos(aux))
+	angulo = round(angulo*(n-1))
+	print angulo
+	if a >= angulo:
 		b = 0
 	elif a >=0:
 		b = -(0.5*sense)
