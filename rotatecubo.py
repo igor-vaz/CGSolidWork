@@ -3,7 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 import copy
-import random
+import random as rd
 from time import sleep
 from math import cos, sin, degrees, acos
 from plyfile import PlyData, PlyElement
@@ -61,6 +61,11 @@ for edge in edges:
 			p.points_indexes = e.tolist()
 			p.original_normal = p.normal
 			polygons.append(p)
+
+colors = []
+for i in range(len(polygons)):
+	colors.append([rd.random(),rd.random(),rd.random()])
+print colors
 
 stop_criteria = [0] * len(polygons)
 
@@ -167,14 +172,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	return
 
 def DrawPolygon():
-	colors = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0]];
+	global colors
 
 	face = 0;
 
