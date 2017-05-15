@@ -372,6 +372,8 @@ class Polygon(object):
         self.matrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 
         self.points_indexes = []
+
+        self.original_normal = []
  
     def __repr__(self):
         """String representation of this polygon.""" 

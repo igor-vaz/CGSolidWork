@@ -38,9 +38,7 @@ pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
 selectedPolygonIndex = None
-a = 0
 polygons=[]
-
 # Cria os poligonos e adiciona na lista
 for edge in edges:
 		for e in edge:
@@ -49,8 +47,11 @@ for edge in edges:
 				points.append(Point(pontos[e[i]][0],pontos[e[i]][1],pontos[e[i]][2]))
 			p = Polygon(points)
 			p.points_indexes = e.tolist()
+			p.original_normal = p.normal
 			polygons.append(p)
 
+stop_criteria = [0] * len(polygons)
+# colors = [[random(), random(), random()]] * len(polygons)
 graph = Graph(g)
 graph.generate_graph(g, edges, polygons)
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
@@ -183,30 +184,26 @@ def DrawPolygon():
 		face = face + 1;
 	return
 
-def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=None):	
-	global a
+def rotateAndDraw(polygon, origen_polygon, index, rotate_point, rotate_axis, matrix=None):	
 	b=0
-	sense = rotate_axis.tripleProd(origen_polygon.normal,polygon.normal)
+	sense = rotate_axis.tripleProd(origen_polygon.original_normal,polygon.original_normal)
 	n = len(polygons)
-	dot_prod = origen_polygon.normal.dotProd(polygon.normal)
-	# if dot_prod == 0.0:
-	# 	angulo = 90
-	# else:
-	aux = dot_prod/origen_polygon.normal.len()*polygon.normal.len()
+	dot_prod = origen_polygon.original_normal.dotProd(polygon.original_normal)
+	aux = dot_prod/origen_polygon.original_normal.len()*polygon.original_normal.len()
 	angulo = math.degrees(math.acos(aux))
-	angulo = round(angulo*(n-1))
-	print angulo
-	if a >= angulo:
+
+	if stop_criteria[index] >= angulo:
 		b = 0
-	elif a >=0:
-		b = -(0.5*sense)
-		a += 0.5
+	elif stop_criteria[index] >=0:
+		b = -(1*sense)
+		stop_criteria[index] += 1*sense
 	
 	##### PREPARA MATRIZ DE TRANSFORMACAO
 	## DEFINE PONTO DO EIXO DE ROTACAO TRANSLADADO
 	##p = Point(1.0, 1.0, 1.0); ##Usando rotate_point
 	## DEFINE QUAL SERA O EIXO DE ROTACAO
 	##p_axis = Point(1.0, 0.0, 0.0); Usando rotate axis
+	# print stop_criteria[index]
 	TR = translateAndRotate(b, rotate_point, rotate_axis)
 	if matrix!=None:
 		TR = dot(TR, matrix)
@@ -219,6 +216,7 @@ def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=Non
 		polygon.points[x].x = result_matrix[0]
 		polygon.points[x].y = result_matrix[1]
 		polygon.points[x].z = result_matrix[2]
+	polygon.normal = polygon.compNormal().normalize()
 
 def rotateDede(root):	
 	l = graph.breadth_first_search(root)
@@ -229,16 +227,17 @@ def rotateDede(root):
 		aux2 = pontos[polygons[parent].edges[i][0]]
 		aux_p = Point(aux2[0],aux2[1],aux2[2])
 		if parent == root:
-			rotateAndDraw(polygons[i], polygons[parent], aux_p, aux_axis)
+			rotateAndDraw(polygons[i], polygons[parent], i, aux_p, aux_axis)
 		else:
 			aux_axis = polygons[parent].normal.crossProd(polygons[i].normal)
 			aux3 = polygons[parent].points_indexes.index(polygons[parent].edges[i][0])
 			aux2 = polygons[parent].points[aux3]			
 			aux_p = Point(aux2[0],aux2[1],aux2[2])
-			rotateAndDraw(polygons[i], polygons[parent], aux_p, aux_axis, polygons[parent].matrix)
+			rotateAndDraw(polygons[i], polygons[parent],i, aux_p, aux_axis, polygons[parent].matrix)
 	DrawPolygon();
 
 def Draw ():
+	# rotateDede(1)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
 	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
