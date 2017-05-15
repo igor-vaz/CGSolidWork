@@ -32,7 +32,19 @@ g_isDragging = False
 g_quadratic = None
 
 line = Line(Point(0,0,0.1),Point(0,0,0))
-plydata = PlyData.read('cube.ply')
+
+fileIndex = input("Enter your file, 1-tetrahedron, 2-octahedron, 3-hexaedron,4-icosahedron,5-dodecahedron\n")
+plydata = None
+if(fileIndex == 1):
+	plydata = PlyData.read('tetrahedron.ply')
+elif(fileIndex == 2):
+	plydata = PlyData.read('octahedron.ply')
+elif(fileIndex == 3):
+	plydata = PlyData.read('cube.ply')
+elif(fileIndex == 4):
+	plydata = PlyData.read('icosahedron.ply')
+elif(fileIndex == 5):
+	plydata = PlyData.read('dodecaedro.ply')
 
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
@@ -51,9 +63,10 @@ for edge in edges:
 			polygons.append(p)
 
 stop_criteria = [0] * len(polygons)
-# colors = [[random(), random(), random()]] * len(polygons)
+
 graph = Graph(g)
 graph.generate_graph(g, edges, polygons)
+
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
 	global g_quadratic
@@ -68,17 +81,10 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	g_quadratic = gluNewQuadric();
 	gluQuadricNormals(g_quadratic, GLU_SMOOTH);
 	gluQuadricDrawStyle(g_quadratic, GLU_FILL); 
-	# Why? this tutorial never maps any textures?! ? 
-	# gluQuadricTexture(g_quadratic, GL_TRUE);			# // Create Texture Coords
-
-	#glEnable (GL_LIGHT0)
-	#glEnable (GL_LIGHTING)
 
 	glEnable (GL_COLOR_MATERIAL)
-	
-	
+		
 	return True
-
 
 def getMouse(cursor_x, cursor_y, z):
 	modelView = glGetDoublev( GL_MODELVIEW_MATRIX );
@@ -89,7 +95,6 @@ def getMouse(cursor_x, cursor_y, z):
 	cursor_z = glReadPixels(cursor_x, cursor_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
 	posX, posY, posZ = gluUnProject(cursor_x, cursor_y, cursor_z, modelView, projection, viewport);
 	return posX, posY, posZ;
-
 
 def Upon_Drag (cursor_x, cursor_y):
 	""" Mouse cursor is moving
@@ -114,7 +119,6 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		clicked or released.
 	"""
 
-	
 	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, line, selectedPolygonIndex
 
 	g_isDragging = False
@@ -126,7 +130,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		# Transforma os pontos de click do mouse
 		p1 = dot(g_ThisRot,[xm,ym,-100])
 		p2 = dot(g_ThisRot,[xm,ym,100])
-		
+
 		# Cria linha entre os dois pontos
 		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
 
@@ -153,7 +157,6 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		# Left button released
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
 	
-
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):	
 		# Left button clicked down
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
@@ -162,7 +165,6 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		g_ArcBall.click (mouse_pt);								# // Update Start Vector And Prepare For Dragging
 
 	return
-
 
 def DrawPolygon():
 	colors = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
@@ -249,29 +251,30 @@ def Draw ():
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
 	
 	### Eixo global x vermelho
-	glBegin(GL_LINES)
-	glColor3f(1.0,0.0,0.0)
-	glVertex2f(0.0, 0.0)
-	glVertex2f(2.0, 0.0)
-	glEnd()
+	# glBegin(GL_LINES)
+	# glColor3f(1.0,0.0,0.0)
+	# glVertex2f(0.0, 0.0)
+	# glVertex2f(2.0, 0.0)
+	# glEnd()
 
 	### Eixo global y amarelo
-	glBegin(GL_LINES)
-	glColor3f(1.0,1.0,0.0)
-	glVertex2f(0.0, 0.0)
-	glVertex2f(0.0, 2.0)
-	glEnd()
+	# glBegin(GL_LINES)
+	# glColor3f(1.0,1.0,0.0)
+	# glVertex2f(0.0, 0.0)
+	# glVertex2f(0.0, 2.0)
+	# glEnd()
 
 	### Eixo global z magenta
-	glBegin(GL_LINES)
-	glColor3f(1.0,0.0,1.0)
-	glVertex3f(0.0, 0.0, 0.0)
-	glVertex3f(0.0, 0.0, 2.0)
-	glEnd()
+	# glBegin(GL_LINES)
+	# glColor3f(1.0,0.0,1.0)
+	# glVertex3f(0.0, 0.0, 0.0)
+	# glVertex3f(0.0, 0.0, 2.0)
+	# glEnd()
 
-	if selectedPolygonIndex == None:
+	if selectedPolygonIndex == None or selectedPolygonIndex == False:
 		DrawPolygon()
 	else:
+		print selectedPolygonIndex
 		rotateDede(selectedPolygonIndex);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
