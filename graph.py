@@ -66,7 +66,6 @@ class Graph(object):
 
     def breadth_first_search(self, root):
         rotate_order = []
-        # TODO Fazer isso generico para o numero
         parent = []
         visited_node = []
         for x in xrange(0,len(self.vertices())):
@@ -78,7 +77,6 @@ class Graph(object):
         while len(queue) != 0 :
             v = queue[0]
             for neighbour in self.__graph_dict[v]:
-                # print(queue)
                 if visited_node[neighbour] == 0:
                     visited_node[neighbour] = 1
                     queue.append(neighbour)
@@ -86,8 +84,6 @@ class Graph(object):
                     parent[neighbour] = v
                 elif neighbour in queue:
                     pass
-                    # print('estou aqui')
-                    #visitar aresta
             del queue[queue.index(v)]        
         return { 'order':rotate_order, 'parent':parent}
 

@@ -59,7 +59,6 @@ def ReSizeGLScene(Width, Height):
 
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
 def keyPressed(*args):
-	print args
 	global g_quadratic
 	# If escape is pressed, kill everything.
 	key = args [0]

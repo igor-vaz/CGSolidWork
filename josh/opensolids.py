@@ -45,8 +45,8 @@ plydata = PlyData.read('modelos/'+sys.argv[1]+'.ply')
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
-selectedPolygonIndex = None
 polygons=[]
+selectedFace = False
 
 # Cria os poligonos e adiciona na lista
 for edge in edges:
@@ -59,10 +59,9 @@ for edge in edges:
 		p.original_normal = p.normal
 		polygons.append(p)
 
-stop_criteria = [0] * len(polygons)
-
 graph = Graph(g)
 graph.generate_graph(g, edges, polygons)
+stop_animate = [0] * len(polygons)
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -118,7 +117,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		clicked or released.
 	"""
 
-	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, selectedPolygonIndex
+	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, selectedFace
 
 	g_isDragging = False
 	if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
@@ -134,7 +133,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
 
 		### Pegar o poligono selecionado
-		selectedPolygonIndex = False
+		selectedFace = False
 		z = -999
 		for index in range(len(polygons)):
 			# Obtem dados sobre intercessao de um poligono na linha do click
@@ -143,7 +142,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 			# e o z do ponto interceptado for maior que o z anterior,
 			# atualiza novo poligono e z mais na frente
 			if intersec[0] and intersec[2] > z:
-				selectedPolygonIndex = index
+				selectedFace = index
 				z = intersec[2]
 
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_UP):
@@ -161,33 +160,29 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 
 
 def DrawPolygon():
-	colors = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
+	paleta = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0]];
 
-	face = 0;
+	cor = 0;
 
 	for polygon in polygons:
 		glBegin(GL_POLYGON);
-		glColor3f(colors[face][0], colors[face][1], colors[face][2]);
+		glColor3f(paleta[cor][0], paleta[cor][1], paleta[cor][2]);
 		for point in polygon.points:
 			glVertex3f(point.x,point.y,point.z)
 		glEnd();
-		face = face + 1;
-		if face >= len(colors):
-			face = 0
+		cor = cor + 1;
+		if cor >= len(paleta):
+			cor = 0
 	return
 
-def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix=None):	
+def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix = None):	
 	b=0
 	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
+	# Produto vetorial entre as normas
 	dot_prod = polygon_origin.original_normal.dotProd(polygon.original_normal)
 	aux = dot_prod/polygon_origin.original_normal.len()*polygon.original_normal.len()
+	# Define angulo de abertura
 	angulo = math.degrees(math.acos(aux))
 
 	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO TERCEIRO ARGUMENTO
@@ -195,19 +190,20 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	if len(sys.argv) >= 4:
 		speed = int(sys.argv[3])
 
-	if stop_criteria[index] >= angulo:
+
+	if stop_animate[index] >= angulo:
 		b = 0
-	elif stop_criteria[index] >=0:
+	elif stop_animate[index] >=0:
 		b = -(speed*sense)
-		stop_criteria[index] += speed*sense
+		stop_animate[index] += speed*sense
 	
-	##### PREPARA MATRIZ DE TRANSFORMACAO
+	### PREPARA MATRIZ DE TRANSFORMACAO
 	TR = translateAndRotate(b, rotate_point, rotate_axis)
 	if matrix!=None:
 		TR = dot(TR, matrix)
 
 	polygon.matrix = TR
-	##### TRANSFORMACOES APLICADAS EM CADA VERTICE
+	### TRANSFORMACOES APLICADAS EM CADA VERTICE
 	for x in xrange(0, len(polygon.points)):
 		aux_vertice_matrix = [polygon.points[x].x,polygon.points[x].y,polygon.points[x].z, 1]
 		result_matrix = dot(TR, aux_vertice_matrix).tolist()[0] 
@@ -279,8 +275,8 @@ def Draw ():
 		glEnd()
 
 	### ABRE SOLIDO SE TIVER POLIGONO SELECIONADO
-	if selectedPolygonIndex != None:
-		openFrom(selectedPolygonIndex);
+	if selectedFace is not False:
+		openFrom(selectedFace);
 
 	### DESENHA POLIGONO
 	DrawPolygon();
