@@ -32,7 +32,7 @@ g_isDragging = False
 g_quadratic = None
 
 line = Line(Point(0,0,0.1),Point(0,0,0))
-plydata = PlyData.read('tetrahedron.ply')
+plydata = PlyData.read('cube.ply')
 
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
@@ -138,12 +138,12 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 			# Se a intercessao da linha for true
 			# e o z do ponto interceptado for maior que o z anterior,
 			# atualiza novo poligono e z mais na frente
-			if intersec[0] and intersec[1][2] > z:
+			if intersec[0] and intersec[2] > z:
 				selectedPolygonIndex = index
-				z = intersec[1][2]
+				z = intersec[2]
 
 		# DEBUG: printar o poligono selecionado
-		print selectedPolygonIndex
+		print "SELECTED FACE: " + str(selectedPolygonIndex)
 
 		# g_LastRot = Matrix3fSetIdentity ();							# // Reset Rotation
 		# g_ThisRot = Matrix3fSetIdentity ();							# // Reset Rotation
@@ -361,7 +361,7 @@ def rotateDede(root):
 	DrawPolygon();
 
 def Draw ():
-	rotateDede(1)
+	# rotateDede(1)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
 	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
@@ -416,11 +416,15 @@ def Draw ():
 	# glRotatef(90,1.0,0.0,0.0);
 	# glRotatef(90,0.5,-0.5,0.5);
 	# glTranslatef(1,0,0)
-	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
-	# if selectedPolygonIndex == None:
+	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if selectedPolygonIndex == None:
+		DrawPolygon()
+	else:
+		rotateDede(selectedPolygonIndex);
+	
 	# DrawPolygon()
-	# else:
-	rotateDede(1);
+	# rotateDede(2);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
 
