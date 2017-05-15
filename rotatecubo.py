@@ -32,7 +32,7 @@ g_isDragging = False
 g_quadratic = None
 
 line = Line(Point(0,0,0.1),Point(0,0,0))
-plydata = PlyData.read('cube.ply')
+plydata = PlyData.read('dodecaedro.ply')
 
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
@@ -126,7 +126,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		# Transforma os pontos de click do mouse
 		p1 = dot(g_ThisRot,[xm,ym,-100])
 		p2 = dot(g_ThisRot,[xm,ym,100])
-		
+
 		# Cria linha entre os dois pontos
 		line = Line(Point(p1[0],p1[1],p1[2]),Point(p2[0],p2[1],p2[2]))
 
@@ -266,9 +266,10 @@ def Draw ():
 	glVertex3f(0.0, 0.0, 2.0)
 	glEnd()
 
-	if selectedPolygonIndex == None:
+	if selectedPolygonIndex == None or selectedPolygonIndex == False:
 		DrawPolygon()
 	else:
+		print selectedPolygonIndex
 		rotateDede(selectedPolygonIndex);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
