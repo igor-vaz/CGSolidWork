@@ -144,12 +144,12 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 			# Se a intercessao da linha for true
 			# e o z do ponto interceptado for maior que o z anterior,
 			# atualiza novo poligono e z mais na frente
-			if intersec[0] and intersec[1][2] > z:
+			if intersec[0] and intersec[2] > z:
 				selectedPolygonIndex = index
-				z = intersec[1][2]
+				z = intersec[2]
 
 		# DEBUG: printar o poligono selecionado
-		print selectedPolygonIndex
+		print "SELECTED FACE: " + str(selectedPolygonIndex)
 
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):	
 		# Left button clicked down
@@ -423,8 +423,8 @@ def Draw ():
 	# glTranslatef(1,0,0)
 	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 	
-	#DrawPolygon()
-	rotateDede(2);
+	DrawPolygon()
+	# rotateDede(2);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
 
