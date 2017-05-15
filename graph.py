@@ -69,7 +69,7 @@ class Graph(object):
         # TODO Fazer isso generico para o numero
         parent = []
         visited_node = []
-        for x in xrange(0,20):
+        for x in xrange(0,len(self.vertices())):
             parent.append(-1) 
             visited_node.append(0)
         visited_node[root] = 1

@@ -173,6 +173,7 @@ def DrawPolygon():
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
 	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0]];
+
 	face = 0;
 
 	for polygon in polygons:
@@ -182,6 +183,8 @@ def DrawPolygon():
 			glVertex3f(point.x,point.y,point.z)
 		glEnd();
 		face = face + 1;
+		if face >= len(colors):
+			face = 0
 	return
 
 def rotateAndDraw(polygon, origen_polygon, index, rotate_point, rotate_axis, matrix=None):	
