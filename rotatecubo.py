@@ -33,7 +33,7 @@ g_quadratic = None
 
 line = Line(Point(0,0,0.1),Point(0,0,0))
 
-fileIndex = input("Enter your file, 1-tetrahedron, 2-octahedron, 3-hexaedron,4-icosahedron,5-dodecahedron\n")
+fileIndex = input("Enter your file, 1-tetrahedron, 2-octahedron, 3-hexaedron,4-icosahedron,5-dodecahedron, other value will open cow file!\n")
 plydata = None
 if(fileIndex == 1):
 	plydata = PlyData.read('tetrahedron.ply')
@@ -45,6 +45,8 @@ elif(fileIndex == 4):
 	plydata = PlyData.read('icosahedron.ply')
 elif(fileIndex == 5):
 	plydata = PlyData.read('dodecaedro.ply')
+else:
+	plydata = PlyData.read('cow.ply')
 
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
