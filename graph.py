@@ -67,8 +67,11 @@ class Graph(object):
     def breadth_first_search(self, root):
         rotate_order = []
         # TODO Fazer isso generico para o numero
-        parent = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1] 
-        visited_node = [0,0,0,0,0,0,0,0,0,0,0,0]
+        parent = []
+        visited_node = []
+        for x in xrange(0,20):
+            parent.append(-1) 
+            visited_node.append(0)
         visited_node[root] = 1
         queue = []
         queue.append(root)

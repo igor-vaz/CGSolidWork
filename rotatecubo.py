@@ -32,12 +32,12 @@ g_isDragging = False
 g_quadratic = None
 
 line = Line(Point(0,0,0.1),Point(0,0,0))
-plydata = PlyData.read('cube.ply')
+plydata = PlyData.read('tetrahedron.ply')
 
 pontos = plydata.elements[0].data
 edges = plydata.elements[1].data
 g = {}
-
+selectedPolygonIndex = None
 a = 0
 polygons=[]
 
@@ -47,7 +47,9 @@ for edge in edges:
 			points=[]
 			for i in range(len(e)):
 				points.append(Point(pontos[e[i]][0],pontos[e[i]][1],pontos[e[i]][2]))
-			polygons.append(Polygon(points))
+			p = Polygon(points)
+			p.points_indexes = e.tolist()
+			polygons.append(p)
 
 graph = Graph(g)
 graph.generate_graph(g, edges, polygons)
@@ -112,19 +114,11 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	"""
 
 	
-	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, line
+	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, line, selectedPolygonIndex
 
 	g_isDragging = False
 	if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
 		# Right button click
-		g_LastRot = Matrix3fSetIdentity ();							# // Reset Rotation
-		g_ThisRot = Matrix3fSetIdentity ();							# // Reset Rotation
-		g_Transform = Matrix4fSetRotationFromMatrix3f (g_Transform, g_ThisRot);	# // Reset Rotation
-	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_UP):
-		# Left button released
-		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
-
-
 		# Obtem os pontos de clique do mouse
 		xm,ym,zm = getMouse(cursor_x,cursor_y, 0)
 
@@ -151,6 +145,14 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		# DEBUG: printar o poligono selecionado
 		print selectedPolygonIndex
 
+		# g_LastRot = Matrix3fSetIdentity ();							# // Reset Rotation
+		# g_ThisRot = Matrix3fSetIdentity ();							# // Reset Rotation
+		# g_Transform = Matrix4fSetRotationFromMatrix3f (g_Transform, g_ThisRot);	# // Reset Rotation
+	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_UP):
+		# Left button released
+		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
+	
+
 	elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_DOWN):	
 		# Left button clicked down
 		g_LastRot = copy.copy (g_ThisRot);							# // Set Last Static Rotation To Last Dynamic One
@@ -163,6 +165,10 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 
 def DrawPolygon():
 	colors = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
+	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
+	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
+	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
+	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
 	[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
 	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0]];
@@ -294,6 +300,8 @@ def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=Non
 	else:
 		aux = dot_prod/origen_polygon.normal.len()*polygon.normal.len()
 		angulo = math.degrees(math.acos(aux))
+	# print angulo*(n-1)	
+	# print round(angulo*(n-1),0)
 	if a > angulo*(n-1):
 		b = 0
 		# print(polygon)
@@ -308,11 +316,9 @@ def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=Non
 	## DEFINE QUAL SERA O EIXO DE ROTACAO
 	##p_axis = Point(1.0, 0.0, 0.0); Usando rotate axis
 	TR = translateAndRotate(b, rotate_point, rotate_axis)
-	# print(TR)
-	# print(matrix)
 	if matrix!=None:
-		# TR = dot(TR, polygon.matrix)
-		TR = dot(TR, matrix) 
+		TR = dot(TR, matrix)
+
 	#polygons[0] = Polygon([Point(1.0,1.0,1.0),Point(2.0,2.0,2.0),Point(3.0,3.0,3.0)])
 	polygon.matrix = TR
 	##### TRANSFORMACOES APLICADAS EM CADA VERTICE
@@ -323,12 +329,14 @@ def rotateAndDraw(polygon, origen_polygon, rotate_point, rotate_axis, matrix=Non
 	# print(result_matrix);
 	# exit();
 	for x in xrange(0, len(polygon.points)):
-		aux_vertice_matrix = [polygon.points[x][0],polygon.points[x][1],polygon.points[x][2], 1]
+		aux_vertice_matrix = [polygon.points[x].x,polygon.points[x].y,polygon.points[x].z, 1]
 		result_matrix = dot(TR, aux_vertice_matrix).tolist()[0] 
 		polygon.points[x].x = result_matrix[0]
 		polygon.points[x].y = result_matrix[1]
 		polygon.points[x].z = result_matrix[2]
-
+	
+	# polygon.rot_normal = polygon.compNormal().normalize()
+	
 	# print(polygon.points)
 	# exit();
 	#exit();
@@ -344,29 +352,16 @@ def rotateDede(root):
 		if parent == root:
 			rotateAndDraw(polygons[i], polygons[parent], aux_p, aux_axis)
 		else:
+			aux_axis = polygons[parent].normal.crossProd(polygons[i].normal)
+			aux3 = polygons[parent].points_indexes.index(polygons[parent].edges[i][0])
+			aux2 = polygons[parent].points[aux3]			
+			aux_p = Point(aux2[0],aux2[1],aux2[2])
 			rotateAndDraw(polygons[i], polygons[parent], aux_p, aux_axis, polygons[parent].matrix)
 	# exit()
-	DrawPolygon();		
-	# exit();
-
-
-
-	# rotateAndDraw(polygons[4], polygons[1],Point(1.0, 1.0, 1.0),basic_axis['x'])
-	# rotateAndDraw(polygons[5], polygons[1],Point(1.0, -1.0, 1.0),basic_axis['x'])
-	# rotateAndDraw(polygons[2], polygons[1],Point(1.0, -1.0, 1.0),basic_axis['y'])
-	# rotateAndDraw(polygons[3], polygons[1],Point(-1.0, -1.0, 1.0),basic_axis['y'])
-
-	# for polygon in polygons:
-	# 	glBegin(GL_POLYGON);
-	# 	glColor3f(colors[face][0], colors[face][1], colors[face][2]);
-	# 	for point in polygon.points:
-	# 		glVertex3f(point.x,point.y,point.z)
-	# 	glEnd();
-	# 	face = face + 1;
-	# return
+	DrawPolygon();
 
 def Draw ():
-	# rotateDede(1)
+	rotateDede(1)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();												# // Reset The Current Modelview Matrix
 	glTranslatef(0.0,0.0,-10.0);									# // Move Left 1.5 Units And Into The Screen 6.0
@@ -398,22 +393,22 @@ def Draw ():
 	glVertex3f(0.0, 0.0, 2.0)
 	glEnd()
 
-	### Linha de pick (line global)
-	glBegin(GL_LINES)
-	glColor3f(1.0,1.0,1.0)
-	glVertex3f(line.p1[0], line.p1[1], line.p1[2])
-	glVertex3f(line.p2[0], line.p2[1], line.p2[2])
-	glEnd()
+	# ### Linha de pick (line global)
+	# glBegin(GL_LINES)
+	# glColor3f(1.0,1.0,1.0)
+	# glVertex3f(line.p1[0], line.p1[1], line.p1[2])
+	# glVertex3f(line.p2[0], line.p2[1], line.p2[2])
+	# glEnd()
 
 
 
-	### Normal do primeiro poligono
-	polygon_test = polygons[0]
-	glBegin(GL_LINES)
-	glColor3f(0.0,1.0,1.0)
-	glVertex3f(0.0, 0.0, 0.0)
-	glVertex3f(-polygon_test.compNormal()[0], -polygon_test.compNormal()[1], -polygon_test.compNormal()[2])
-	glEnd()
+	# ### Normal do primeiro poligono
+	# polygon_test = polygons[0]
+	# glBegin(GL_LINES)
+	# glColor3f(0.0,1.0,1.0)
+	# glVertex3f(0.0, 0.0, 0.0)
+	# glVertex3f(-polygon_test.compNormal()[0], -polygon_test.compNormal()[1], -polygon_test.compNormal()[2])
+	# glEnd()
 
 
 
@@ -422,9 +417,10 @@ def Draw ():
 	# glRotatef(90,0.5,-0.5,0.5);
 	# glTranslatef(1,0,0)
 	# glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
-	
-	#DrawPolygon()
-	rotateDede(2);
+	# if selectedPolygonIndex == None:
+	# DrawPolygon()
+	# else:
+	rotateDede(1);
 
 	glPopMatrix(); 												# // NEW: Unapply Dynamic Transform
 

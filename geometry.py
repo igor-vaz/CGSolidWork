@@ -370,6 +370,8 @@ class Polygon(object):
         self.edges = {}
 
         self.matrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+
+        self.points_indexes = []
  
     def __repr__(self):
         """String representation of this polygon.""" 
