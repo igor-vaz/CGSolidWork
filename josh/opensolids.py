@@ -30,42 +30,30 @@ g_quadratic = None
 
 
 if len(sys.argv) == 1:
-	print "Use: python "+sys.argv[0]+" [modelo] [zoom = -8] [velocidade = 2] [exibir_eixos = False]"
+	print "Use: python "+sys.argv[0]+" [modelo] [velocidade = 2] [exibir_eixos = False]"
 	print "Modelos disponiveis:"
 	print " - tetraedro"
 	print " - octaedro"
 	print " - hexaedro"
 	print " - icosaedro"
 	print " - dodecaedro"
+	print " bonus:"
+	print " - dart"
+	print " - cow"
+	print " - porsche"
 	exit(1)
 
-
-plydata = PlyData.read('modelos/'+sys.argv[1]+'.ply')
-
-pontos = plydata.elements[0].data
-edges = plydata.elements[1].data
-g = {}
+vertexs = None
+edges = None
 polygons=[]
+graph = None
 selectedFace = False
-
-# Cria os poligonos e adiciona na lista
-for edge in edges:
-	for e in edge:
-		points=[]
-		for i in range(len(e)):
-			points.append(Point(pontos[e[i]][0],pontos[e[i]][1],pontos[e[i]][2]))
-		p = Polygon(points)
-		p.points_indexes = e.tolist()
-		p.original_normal = p.normal
-		polygons.append(p)
-
-graph = Graph(g)
-graph.generate_graph(g, edges, polygons)
-stop_animate = [0] * len(polygons)
+animateProgress = None
+zoom = -8
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
-	global g_quadratic
+	global g_quadratic, vertexs, edges, polygons, graph, animateProgress
 
 	glClearColor(0.0, 0.0, 0.0, 1.0)					# This Will Clear The Background Color To Black
 	glClearDepth(1.0)									# Enables Clearing Of The Depth Buffer
@@ -79,7 +67,29 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	gluQuadricDrawStyle(g_quadratic, GLU_FILL); 
 	glEnable (GL_COLOR_MATERIAL)
 	
+	# Obtem modelo e separa os vertices e bordas
+	plydata = PlyData.read('modelos/'+sys.argv[1]+'.ply')
+	vertexs = plydata.elements[0].data
+	edges = plydata.elements[1].data
 	
+	# Cria os poligonos e adiciona na lista de poligonos
+	for edge in edges:
+		edge = edge[0]
+		points=[]
+		for i in range(len(edge)):
+			points.append(Point(vertexs[edge[i]][0],vertexs[edge[i]][1],vertexs[edge[i]][2]))
+		polygon = Polygon(points)
+		polygon.points_indexes = edge.tolist()
+		# Guarda a normal inicial antes de sofrer as transformacoes
+		polygon.original_normal = polygon.normal
+		polygons.append(polygon)
+	
+	# Cria o grafo e gera baseado na lista de poligonos e bordas
+	graph = Graph({})
+	graph.generate_graph({}, edges, polygons)
+	
+	animateProgress = [0] * len(polygons)
+
 	return True
 
 
@@ -116,9 +126,15 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		Glut calls this function when a mouse button is
 		clicked or released.
 	"""
+	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, selectedFace, zoom
 
-	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, selectedFace
+	# Mouse Scroll
+	if button == 3:
+		zoom += float(button_state)/4
+	if button == 4:
+		zoom -= float(button_state)/4
 
+	# Mouse click
 	g_isDragging = False
 	if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
 		# Right button click
@@ -160,24 +176,24 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 
 
 def DrawPolygon():
-	paleta = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0]];
+	palette = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
+	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
+	[0.0, 0.0, 0.502], [1.0, 0.647, 0.502], [1.0, 1.0, 0.502],
+	[1.0,  0.0,  0.502], [0.0,  0.502,  0.502], [1.0,  0.0,  0.502]];
 
-	cor = 0;
-
+	color = 0;
 	for polygon in polygons:
 		glBegin(GL_POLYGON);
-		glColor3f(paleta[cor][0], paleta[cor][1], paleta[cor][2]);
+		glColor3f(palette[color][0], palette[color][1], palette[color][2]);
 		for point in polygon.points:
 			glVertex3f(point.x,point.y,point.z)
 		glEnd();
-		cor = cor + 1;
-		if cor >= len(paleta):
-			cor = 0
+		color += 1;
+		if color >= len(palette):
+			color = 0
 	return
 
-def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix = None):	
-	b=0
+def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
 	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
 	# Produto vetorial entre as normas
 	dot_prod = polygon_origin.original_normal.dotProd(polygon.original_normal)
@@ -185,28 +201,29 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	# Define angulo de abertura
 	angulo = math.degrees(math.acos(aux))
 
-	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO TERCEIRO ARGUMENTO
+	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO SEGUNDO ARGUMENTO
 	speed = 2
-	if len(sys.argv) >= 4:
-		speed = int(sys.argv[3])
+	if len(sys.argv) >= 3:
+		speed = float(sys.argv[2])
 
-
-	if stop_animate[index] >= angulo:
+	### PREPARA SETORES DE b PARA ROTACIONAR FRACIONADO ATE O ANGULO FINAL COMO SE FOSSE ANIMADO
+	b=0
+	if animateProgress[index] >= angulo:
 		b = 0
-	elif stop_animate[index] >=0:
+	elif animateProgress[index] >=0:
 		b = -(speed*sense)
-		stop_animate[index] += speed*sense
+		animateProgress[index] += speed*sense
 	
 	### PREPARA MATRIZ DE TRANSFORMACAO
-	TR = translateAndRotate(b, rotate_point, rotate_axis)
-	if matrix!=None:
-		TR = dot(TR, matrix)
+	matrizTrans = translateAndRotate(b, rotate_point, rotate_axis)
+	if matrixTransParent is not None:
+		matrizTrans = dot(matrizTrans, matrixTransParent)
 
-	polygon.matrix = TR
+	polygon.matrix = matrizTrans
 	### TRANSFORMACOES APLICADAS EM CADA VERTICE
 	for x in xrange(0, len(polygon.points)):
-		aux_vertice_matrix = [polygon.points[x].x,polygon.points[x].y,polygon.points[x].z, 1]
-		result_matrix = dot(TR, aux_vertice_matrix).tolist()[0] 
+		vertice_matrix = [polygon.points[x].x,polygon.points[x].y,polygon.points[x].z, 1]
+		result_matrix = dot(matrizTrans, vertice_matrix).tolist()[0] 
 		polygon.points[x].x = result_matrix[0]
 		polygon.points[x].y = result_matrix[1]
 		polygon.points[x].z = result_matrix[2]
@@ -214,47 +231,36 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 
 
 def openFrom(root):	
-	l = graph.breadth_first_search(root)
+	tree = graph.breadth_first_search(root)
 	
-	for i in l['order']:
-		parent = l['parent'][i]		
-		aux_axis = polygons[parent].normal.crossProd(polygons[i].normal)
-		aux2 = pontos[polygons[parent].edges[i][0]]
-		aux_p = Point(aux2[0],aux2[1],aux2[2])
+	for node in tree['order']:
+		parent = tree['parent'][node]		
+		p_axis = polygons[parent].normal.crossProd(polygons[node].normal)
 		if parent == root:
-			rotateFace(polygons[i], polygons[parent], i, aux_p, aux_axis)
+			vertex = vertexs[polygons[parent].edges[node][0]]
+			p_ref = Point(vertex[0],vertex[1],vertex[2])
+			rotateFace(polygons[node], polygons[parent], node, p_ref, p_axis)
 		else:
-			aux_axis = polygons[parent].normal.crossProd(polygons[i].normal)
-			aux3 = polygons[parent].points_indexes.index(polygons[parent].edges[i][0])
-			aux2 = polygons[parent].points[aux3]			
-			aux_p = Point(aux2[0],aux2[1],aux2[2])
-			rotateFace(polygons[i], polygons[parent],i, aux_p, aux_axis, polygons[parent].matrix)
+			aux = polygons[parent].points_indexes.index(polygons[parent].edges[node][0])
+			vertex = polygons[parent].points[aux]			
+			p_ref = Point(vertex[0],vertex[1],vertex[2])
+			rotateFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
 
 
 def Draw ():
+	global zoom
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
-	glLoadIdentity();												# // Reset The Current Modelview Matrix
+	glLoadIdentity();		
 
-	# ### PLANO DE FUNDO
-	# glBegin(GL_QUADS)
-	# glColor3f(1.0,0.0,1.0)
-	# glVertex3f(-10000.0, -10000.0, -100)
-	# glVertex3f(10000.0, -10000.0, -100)
-	# glVertex3f(10000.0, 10000.0, -100)
-	# glVertex3f(-10000.0, 10000.0, -100)
-	# glEnd()
-
-	### DEFINE ZOOM SE PASSADO SEGUNDO ARGUMENTO
-	if len(sys.argv) >= 3:
-		glTranslatef(0.0,0.0, float(sys.argv[2]));
-	else:
-		glTranslatef(0.0,0.0,-8.0);
+	### DEFINE ZOOM dinamico
+	glTranslatef(0.0,0.0,zoom);
 
 	glPushMatrix();													# // NEW: Prepare Dynamic Transform
 	glMultMatrixf(g_Transform);										# // NEW: Apply Dynamic Transform
 
-	### DEFINE EIXOS PRINCIPAIS SE PASSADO QUARTO ARGUMENTO
-	if len(sys.argv) >= 5 and sys.argv[4] == "True":
+	### DEFINE EIXOS PRINCIPAIS SE PASSADO TERCEIRO ARGUMENTO
+	if len(sys.argv) >= 4 and sys.argv[3] == "True":
 		### Eixo global x
 		glBegin(GL_LINES)
 		glColor3f(1.0,0.0,0.0)
