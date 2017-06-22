@@ -74,7 +74,7 @@ class ArcBallT:
 		NewVec = Vector3fT ()
 		# //Copy paramter into temp point
 		TempPt = copy.copy (NewPt)
-		print 'NewPt', NewPt, TempPt
+		# print 'NewPt', NewPt, TempPt
 		# //Adjust point coords and scale down to range of [-1 ... 1]
 		TempPt [X] = (NewPt [X] * self.m_AdjustWidth) - 1.0
 		TempPt [Y] = 1.0 - (NewPt [Y] * self.m_AdjustHeight)

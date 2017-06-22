@@ -3,7 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 
-from rotatecubo import *		# Draw (), Initialize () and all the real OpenGL work.
+from opensolids import *		# Draw (), Initialize () and all the real OpenGL work.
 from ArcBall import *		# // *NEW* ArcBall header
 
 
@@ -65,7 +65,29 @@ def keyPressed(*args):
 	if key == ESCAPE:
 		gluDeleteQuadric (g_quadratic)
 		sys.exit ()
-
+	elif key == 'r':
+		python = sys.executable
+		os.execl(python, python, * sys.argv)
+	elif key == '1':
+		sys.argv[1] = "tetraedro"
+		python = sys.executable
+		os.execl(python, python, * sys.argv)
+	elif key == '2':
+		sys.argv[1] = "octaedro"
+		python = sys.executable
+		os.execl(python, python, * sys.argv)
+	elif key == '3':
+		sys.argv[1] = "hexaedro"
+		python = sys.executable
+		os.execl(python, python, * sys.argv)
+	elif key == '4':
+		sys.argv[1] = "icosaedro"
+		python = sys.executable
+		os.execl(python, python, * sys.argv)
+	elif key == '5':
+		sys.argv[1] = "dodecaedro"
+		python = sys.executable
+		os.execl(python, python, * sys.argv)
 
 
 def main():

@@ -3,6 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 import copy
+import random as rd
 from time import sleep
 from math import cos, sin, degrees, acos
 from plyfile import PlyData, PlyElement
@@ -46,6 +47,7 @@ if len(sys.argv) == 1:
 vertexs = None
 edges = None
 polygons=[]
+colors=[]
 graph = None
 selectedFace = False
 animateProgress = None
@@ -53,7 +55,7 @@ zoom = -8
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
-	global g_quadratic, vertexs, edges, polygons, graph, animateProgress
+	global g_quadratic, vertexs, edges, polygons, graph, animateProgress, colors
 
 	glClearColor(0.0, 0.0, 0.0, 1.0)					# This Will Clear The Background Color To Black
 	glClearDepth(1.0)									# Enables Clearing Of The Depth Buffer
@@ -84,6 +86,9 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 		polygon.original_normal = polygon.normal
 		polygons.append(polygon)
 	
+	for i in range(len(polygons)):
+		colors.append([rd.random(),rd.random(),rd.random()])
+
 	# Cria o grafo e gera baseado na lista de poligonos e bordas
 	graph = Graph({})
 	graph.generate_graph({}, edges, polygons)
@@ -102,7 +107,6 @@ def getMouse(cursor_x, cursor_y, z):
 	cursor_z = glReadPixels(cursor_x, cursor_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
 	posX, posY, posZ = gluUnProject(cursor_x, cursor_y, cursor_z, modelView, projection, viewport);
 	return posX, posY, posZ;
-
 
 def Upon_Drag (cursor_x, cursor_y):
 	""" Mouse cursor is moving
@@ -126,6 +130,7 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		Glut calls this function when a mouse button is
 		clicked or released.
 	"""
+
 	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, selectedFace, zoom
 
 	# Mouse Scroll
@@ -174,23 +179,20 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 
 	return
 
-
 def DrawPolygon():
-	palette = [[1.0, 0.0, 0.0], [1.0, 0.647, 0.0], [1.0, 1.0, 1.0],
-	[1.0,  1.0,  0.0], [0.0,  0.502,  0.0], [0.0,  0.0,  1.0],
-	[0.0, 0.0, 0.502], [1.0, 0.647, 0.502], [1.0, 1.0, 0.502],
-	[1.0,  0.0,  0.502], [0.0,  0.502,  0.502], [1.0,  0.0,  0.502]];
+	global colors
 
-	color = 0;
+	face = 0;
+
 	for polygon in polygons:
 		glBegin(GL_POLYGON);
-		glColor3f(palette[color][0], palette[color][1], palette[color][2]);
+		glColor3f(colors[face][0], colors[face][1], colors[face][2]);
 		for point in polygon.points:
 			glVertex3f(point.x,point.y,point.z)
 		glEnd();
-		color += 1;
-		if color >= len(palette):
-			color = 0
+		face = face + 1;
+		if face >= len(colors):
+			face = 0
 	return
 
 def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
