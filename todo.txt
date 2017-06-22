@@ -1,0 +1,6 @@
+Pick quando não rotaciona o cubo.
+Clicar enquanto o cubo estiver abrindo
+Resolver problemas da animação e FECHAR OS SÓLIDOS!!!
+Aplicar textura após abrir o sólido e tirar do click do mouse
+Ao aplicar textura na face da frente dá ruim
+Perguntar se precisa fazer iluminação!!

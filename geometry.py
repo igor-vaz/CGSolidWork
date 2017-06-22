@@ -374,6 +374,8 @@ class Polygon(object):
         self.points_indexes = []
 
         self.original_normal = []
+
+        self.texture_coords = []
  
     def __repr__(self):
         """String representation of this polygon.""" 

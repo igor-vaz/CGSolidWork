@@ -10,8 +10,13 @@ from plyfile import PlyData, PlyElement
 from graph import *
 from matrix import *
 from geometry import *
+import copy
 
 from ArcBall import * 				# ArcBallT and this tutorials set of points/vectors/matrix types
+try:
+    from PIL.Image import open
+except ImportError as err:
+    from Image import open
 
 # *********************** Globals *********************** 
 # Python 2.2 defines these directly
@@ -52,10 +57,11 @@ graph = None
 selectedFace = False
 animateProgress = None
 zoom = -8
+imageID = None
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
-	global g_quadratic, vertexs, edges, polygons, graph, animateProgress, colors
+	global g_quadratic, vertexs, edges, polygons, graph, animateProgress, colors, imageID
 
 	glClearColor(0.0, 0.0, 0.0, 1.0)					# This Will Clear The Background Color To Black
 	glClearDepth(1.0)									# Enables Clearing Of The Depth Buffer
@@ -95,8 +101,9 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	
 	animateProgress = [0] * len(polygons)
 
-	return True
+	imageID = loadImage()
 
+	return True
 
 def getMouse(cursor_x, cursor_y, z):
 	modelView = glGetDoublev( GL_MODELVIEW_MATRIX );
@@ -132,6 +139,13 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 	"""
 
 	global g_isDragging, g_LastRot, g_Transform, g_ThisRot,polygons, selectedFace, zoom
+
+
+
+	if button == 1 and button_state == GLUT_UP:
+		flatMapSize()
+
+
 
 	# Mouse Scroll
 	if button == 3:
@@ -183,12 +197,15 @@ def DrawPolygon():
 	global colors
 
 	face = 0;
-
 	for polygon in polygons:
 		glBegin(GL_POLYGON);
 		glColor3f(colors[face][0], colors[face][1], colors[face][2]);
+		p = 0
 		for point in polygon.points:
+			if len(polygon.texture_coords) > 0:
+				glTexCoord2f(polygon.texture_coords[p][0], polygon.texture_coords[p][1]);
 			glVertex3f(point.x,point.y,point.z)
+			p += 1
 		glEnd();
 		face = face + 1;
 		if face >= len(colors):
@@ -231,7 +248,6 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 		polygon.points[x].z = result_matrix[2]
 	polygon.normal = polygon.compNormal().normalize()
 
-
 def openFrom(root):	
 	tree = graph.breadth_first_search(root)
 	
@@ -251,6 +267,9 @@ def openFrom(root):
 
 def Draw ():
 	global zoom
+
+	if len(polygons[0].texture_coords) > 0:
+		setupTexture()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				# // Clear Screen And Depth Buffer
 	glLoadIdentity();		
@@ -289,8 +308,115 @@ def Draw ():
 	### DESENHA POLIGONO
 	DrawPolygon();
 
+	glDisable(GL_TEXTURE_2D)
+
 	glPopMatrix();													# // NEW: Unapply Dynamic Transform
 	glFlush ();														# // Flush The GL Rendering Pipeline
 	glutSwapBuffers()
+
+	return
+
+## We are going to use the Python Imaging Library (PIL) for loading images, 
+#  something which is obviously not seen in the original tutorial.
+#  This method combines all of the functionality required to load the image with PIL, 
+#  convert it to a format compatible with PyOpenGL, generate the texture ID, 
+#  and store the image data under that texture ID.
+def loadImage():
+	"""Load an image file as a 2D texture using PIL"""
+	imageName = "images/velazquez_texture_256.jpg" 
+	# PIL defines an "open" method which is Image specific!
+	im = open(imageName)
+	try:
+		ix, iy, image = im.size[0], im.size[1], im.tobytes("raw", "RGBA", 0, -1)
+	except (SystemError, ValueError):
+		ix, iy, image = im.size[0], im.size[1], im.tobytes("raw", "RGBX", 0, -1)
+	except AttributeError:
+		ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBX", 0, -1)
+
+	# Generate a texture ID
+	ID = glGenTextures(1)
+
+	# Make our new texture ID the current 2D texture
+	glBindTexture(GL_TEXTURE_2D, ID)
+	glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+
+	# Copy the texture data into the current texture ID
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+
+	# Note that only the ID is returned, no reference to the image object or the 
+	# string data is stored in user space. 
+	# The data is only present within the GL after this call exits.
+	return ID
+
+def setupTexture():
+	global imageID
+	"""Render-time texture environment setup"""
+
+	# Configure the texture rendering parameters
+	glEnable(GL_TEXTURE_2D)
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+	# Re-select our texture, could use other generated textures if we had generated them earlier...
+	glBindTexture(GL_TEXTURE_2D, imageID)
+
+def flatMapSize():
+	global polygons
+
+	polygons2 = copy.deepcopy(polygons)
+
+
+	maxX, minX, maxY, minY = 0,0,0,0;
+
+	for polygon in polygons2:
+		selectedPolygon = polygon
+		zAxis = Point(0,0,1)
+		# Produto vetorial entre as normas
+		dot_prod = selectedPolygon.normal.dotProd(zAxis)
+		aux = dot_prod/selectedPolygon.normal.len()*zAxis.len()
+		# Define angulo de abertura
+		angulo = math.degrees(math.acos(aux))
+		print angulo
+		if angulo != 0 and angulo != 180:
+			rotate_axis = selectedPolygon.normal.crossProd(zAxis)
+
+			matrizTrans = translateAndRotate(angulo, Point(0,0.0,0), rotate_axis)
+
+		for i in xrange(0, len(polygon.points)):
+			if angulo != 0 and angulo != 180:
+				vertice_matrix = [polygon.points[i].x,polygon.points[i].y,polygon.points[i].z, 1]
+				result_matrix = dot(matrizTrans, vertice_matrix).tolist()[0] 
+				polygon.points[i].x = result_matrix[0]
+				polygon.points[i].y = result_matrix[1]
+				polygon.points[i].z = result_matrix[2]
+
+			point = polygon.points[i]
+
+			if maxX < point.x: 
+				maxX = point.x
+
+			if minX > point.x: 
+				minX = point.x 
+
+			if maxY < point.y: 
+				maxY = point.y
+
+			if minY > point.y: 
+				minY = point.y 
+
+	largura = maxX - minX
+	altura = maxY - minY
+
+	for j in xrange(0, len(polygons2)):
+		polygon = polygons2[j]
+		for i in xrange(0, len(polygon.points)):
+			point = polygon.points[i]
+
+			mapX = (point.x - minX) / largura
+			mapY = (point.y - minY) / altura
+
+			polygons[j].texture_coords.append([mapX, mapY])
 
 	return
