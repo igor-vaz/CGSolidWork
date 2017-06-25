@@ -58,6 +58,7 @@ selectedFace = False
 animateProgress = None
 zoom = -8
 imageID = None
+isSolidOpen = False
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -213,7 +214,9 @@ def DrawPolygon():
 	return
 
 def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
+	global isSolidOpen
 	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
+	print(sense)
 	# Produto vetorial entre as normas
 	dot_prod = polygon_origin.original_normal.dotProd(polygon.original_normal)
 	aux = dot_prod/polygon_origin.original_normal.len()*polygon.original_normal.len()
@@ -229,9 +232,10 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	b=0
 	if animateProgress[index] >= angulo:
 		b = 0
+		isSolidOpen = True
 	elif animateProgress[index] >=0:
-		b = -(speed*sense)
-		animateProgress[index] += speed*sense
+		b = -(speed)
+		animateProgress[index] += speed
 	
 	### PREPARA MATRIZ DE TRANSFORMACAO
 	matrizTrans = translateAndRotate(b, rotate_point, rotate_axis)
@@ -248,7 +252,7 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 		polygon.points[x].z = result_matrix[2]
 	polygon.normal = polygon.compNormal().normalize()
 
-def openFrom(root):	
+def openFrom(root):
 	tree = graph.breadth_first_search(root)
 	
 	for node in tree['order']:
@@ -266,7 +270,7 @@ def openFrom(root):
 
 
 def Draw ():
-	global zoom
+	global zoom, isSolidOpen
 
 	if len(polygons[0].texture_coords) > 0:
 		setupTexture()
@@ -307,6 +311,9 @@ def Draw ():
 
 	### DESENHA POLIGONO
 	DrawPolygon();
+
+	if isSolidOpen:
+		flatMapSize() 
 
 	glDisable(GL_TEXTURE_2D)
 
