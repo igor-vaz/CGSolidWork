@@ -11,6 +11,7 @@ from graph import *
 from matrix import *
 from geometry import *
 import copy
+from numpy.linalg import inv
 
 from ArcBall import * 				# ArcBallT and this tutorials set of points/vectors/matrix types
 try:
@@ -214,9 +215,9 @@ def DrawPolygon():
 	return
 
 def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
-	global isSolidOpen
+	global isSolidOpen, animateProgress
 	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
-	print(sense)
+
 	# Produto vetorial entre as normas
 	dot_prod = polygon_origin.original_normal.dotProd(polygon.original_normal)
 	aux = dot_prod/polygon_origin.original_normal.len()*polygon.original_normal.len()
@@ -256,7 +257,7 @@ def openFrom(root):
 	tree = graph.breadth_first_search(root)
 	
 	for node in tree['order']:
-		parent = tree['parent'][node]		
+		parent = tree['parent'][node]	
 		p_axis = polygons[parent].normal.crossProd(polygons[node].normal)
 		if parent == root:
 			vertex = vertexs[polygons[parent].edges[node][0]]
@@ -268,9 +269,63 @@ def openFrom(root):
 			p_ref = Point(vertex[0],vertex[1],vertex[2])
 			rotateFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
 
+def closeFrom(root):
+	tree = graph.breadth_first_search(root)
+	for node in tree['order']:
+		parent = tree['parent'][node]		
+		p_axis = polygons[parent].normal.crossProd(polygons[node].normal)
+		if parent == root:
+			vertex = vertexs[polygons[parent].edges[node][0]]
+			p_ref = Point(vertex[0],vertex[1],vertex[2])
+			closeFace(polygons[node], polygons[parent], node, p_ref, p_axis)
+		else:
+			aux = polygons[parent].points_indexes.index(polygons[parent].edges[node][0])
+			vertex = polygons[parent].points[aux]			
+			p_ref = Point(vertex[0],vertex[1],vertex[2])
+			closeFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
+
+def closeFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
+	global isSolidOpen,animateProgress,selectedFace
+	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
+	
+	# Produto vetorial entre as normas
+	dot_prod = polygon_origin.original_normal.dotProd(polygon.original_normal)
+	aux = dot_prod/polygon_origin.original_normal.len()*polygon.original_normal.len()
+	# Define angulo de abertura
+	angulo = math.degrees(math.acos(aux))
+	
+	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO SEGUNDO ARGUMENTO
+	speed = 2
+	if len(sys.argv) >= 3:
+		speed = float(sys.argv[2])
+
+	### PREPARA SETORES DE b PARA ROTACIONAR FRACIONADO ATE O ANGULO FINAL COMO SE FOSSE ANIMADO
+	b=0
+	if animateProgress[index] <= 0:
+		b = 0
+		isSolidOpen = False
+		selectedFace = False
+	elif animateProgress[index] >= angulo:
+		b = -(speed)
+		animateProgress[index] -= speed
+	
+	### PREPARA MATRIZ DE TRANSFORMACAO
+	matrizTrans = translateAndRotate(b, rotate_point, rotate_axis)
+	if matrixTransParent is not None:
+		matrizTrans = dot(matrizTrans, matrixTransParent)
+
+	polygon.matrix = matrizTrans
+	### TRANSFORMACOES APLICADAS EM CADA VERTICE
+	for x in xrange(0, len(polygon.points)):
+		vertice_matrix = [polygon.points[x].x,polygon.points[x].y,polygon.points[x].z, 1]
+		result_matrix = dot(matrizTrans, vertice_matrix).tolist()[0] 
+		polygon.points[x].x = result_matrix[0]
+		polygon.points[x].y = result_matrix[1]
+		polygon.points[x].z = result_matrix[2]
+	polygon.normal = polygon.compNormal().normalize()
 
 def Draw ():
-	global zoom, isSolidOpen
+	global zoom, isSolidOpen,selectedFace
 
 	if len(polygons[0].texture_coords) > 0:
 		setupTexture()
@@ -314,6 +369,10 @@ def Draw ():
 
 	if isSolidOpen:
 		flatMapSize() 
+		if selectedFace is not False:
+			closeFrom(selectedFace)
+			isSolidOpen = False
+		selectedFace = False
 
 	glDisable(GL_TEXTURE_2D)
 
@@ -385,7 +444,7 @@ def flatMapSize():
 		aux = dot_prod/selectedPolygon.normal.len()*zAxis.len()
 		# Define angulo de abertura
 		angulo = math.degrees(math.acos(aux))
-		print angulo
+
 		if angulo != 0 and angulo != 180:
 			rotate_axis = selectedPolygon.normal.crossProd(zAxis)
 
