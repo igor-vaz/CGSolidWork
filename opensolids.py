@@ -215,7 +215,7 @@ def DrawPolygon():
 	return
 
 def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
-	global isSolidOpen, animateProgress
+	global isSolidOpen, animateProgress,selectedFace
 	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
 
 	# Produto vetorial entre as normas
@@ -223,7 +223,7 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	aux = dot_prod/polygon_origin.original_normal.len()*polygon.original_normal.len()
 	# Define angulo de abertura
 	angulo = math.degrees(math.acos(aux))
-
+	
 	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO SEGUNDO ARGUMENTO
 	speed = 2
 	if len(sys.argv) >= 3:
@@ -231,17 +231,41 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 
 	### PREPARA SETORES DE b PARA ROTACIONAR FRACIONADO ATE O ANGULO FINAL COMO SE FOSSE ANIMADO
 	b=0
-	if animateProgress[index] >= angulo:
-		b = 0
-		isSolidOpen = True
-	elif animateProgress[index] >=0:
+	# if animateProgress[index] >= angulo:
+	# 	b = 0
+	# 	isSolidOpen = True
+	# elif animateProgress[index] >=0:
+	# 	b = -(speed)
+	# 	print(b)
+	# 	animateProgress[index] += speed
+	
+	#animacao para abrir o solido
+	if animateProgress[index] < angulo and not isSolidOpen:
 		b = -(speed)
 		animateProgress[index] += speed
-	
+	#animacao para fechar o solido(EM TEORIA)
+	elif animateProgress[index] > 0 and isSolidOpen:
+		b = -speed
+		animateProgress[index] -= speed
+	#Solido fechado e face selecionada apagada
+	# elif animateProgress[index] < speed and isSolidOpen:
+	# 	isSolidOpen = False
+	# 	selectedFace = False
+	#Solido aberto
+	elif animateProgress[index] >= angulo:
+		b = 0
+		isSolidOpen = True
+
+
+	print(animateProgress[index])
+	print(isSolidOpen)
+	print("b = "+str(b))
 	### PREPARA MATRIZ DE TRANSFORMACAO
 	matrizTrans = translateAndRotate(b, rotate_point, rotate_axis)
-	if matrixTransParent is not None:
+	if matrixTransParent is not None and not isSolidOpen:
 		matrizTrans = dot(matrizTrans, matrixTransParent)
+	elif matrixTransParent is not None and isSolidOpen:
+		matrizTrans = dot(matrizTrans, inv(matrixTransParent))
 
 	polygon.matrix = matrizTrans
 	### TRANSFORMACOES APLICADAS EM CADA VERTICE
@@ -277,12 +301,12 @@ def closeFrom(root):
 		if parent == root:
 			vertex = vertexs[polygons[parent].edges[node][0]]
 			p_ref = Point(vertex[0],vertex[1],vertex[2])
-			closeFace(polygons[node], polygons[parent], node, p_ref, p_axis)
+			rotateFace(polygons[node], polygons[parent], node, p_ref, p_axis)
 		else:
 			aux = polygons[parent].points_indexes.index(polygons[parent].edges[node][0])
 			vertex = polygons[parent].points[aux]			
 			p_ref = Point(vertex[0],vertex[1],vertex[2])
-			closeFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
+			rotateFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
 
 def closeFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
 	global isSolidOpen,animateProgress,selectedFace
@@ -371,8 +395,8 @@ def Draw ():
 		flatMapSize() 
 		if selectedFace is not False:
 			closeFrom(selectedFace)
-			isSolidOpen = False
-		selectedFace = False
+		# isSolidOpen = False
+		# selectedFace = False
 
 	glDisable(GL_TEXTURE_2D)
 
