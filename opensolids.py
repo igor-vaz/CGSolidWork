@@ -232,6 +232,8 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 
 	### PREPARA SETORES DE b PARA ROTACIONAR FRACIONADO ATE O ANGULO FINAL COMO SE FOSSE ANIMADO
 	b=0
+
+	#trecho fecha FECHA O SOLIDO
 	if isSolidOpen:
 		b = speed
 		animateProgress[index] -= speed
@@ -239,7 +241,13 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 			count+=1
 			if count == len(polygons)-1:
 				selectedFace = False 
-		# print(count)
+	#ANIMA O SOLIDO
+	# if isSolidOpen:
+	# 	if animateProgress[index] <= 0:
+	# 		isSolidOpen = False
+	# 	else:
+	# 		b = speed
+	# 		animateProgress[index] -= speed
 	if not isSolidOpen:
 		if animateProgress[index] >= angulo-speed:
 			# b = 0
@@ -250,8 +258,6 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 		elif animateProgress[index] >=0:
 			b = -(speed)
 			animateProgress[index] += speed
-	# print(b)
-
 
 	### PREPARA MATRIZ DE TRANSFORMACAO
 	matrizTrans = translateAndRotate(b, rotate_point, rotate_axis)
