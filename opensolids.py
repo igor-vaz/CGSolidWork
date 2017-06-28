@@ -232,6 +232,8 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 
 	### PREPARA SETORES DE b PARA ROTACIONAR FRACIONADO ATE O ANGULO FINAL COMO SE FOSSE ANIMADO
 	b=0
+
+	#trecho fecha FECHA O SOLIDO
 	if isSolidOpen:
 		b = speed
 		animateProgress[index] -= speed
@@ -392,12 +394,10 @@ def setupTexture():
 def flatMapSize():
 	global polygons
 
-	polygons2 = copy.deepcopy(polygons)
-
-
+	count1 = 0
 	maxX, minX, maxY, minY = 0,0,0,0;
 
-	for polygon in polygons2:
+	for polygon in polygons:
 		selectedPolygon = polygon
 		zAxis = Point(0,0,1)
 		# Produto vetorial entre as normas
@@ -405,45 +405,88 @@ def flatMapSize():
 		aux = dot_prod/selectedPolygon.normal.len()*zAxis.len()
 		# Define angulo de abertura
 		angulo = math.degrees(math.acos(aux))
+		if angulo == 0 or angulo == 180:
+			count1+=1
 
-		if angulo != 0 and angulo != 180:
-			rotate_axis = selectedPolygon.normal.crossProd(zAxis)
+	if count1 > 0:
+		for polygon in polygons:
+			for i in xrange(0, len(polygon.points)):
+				point = polygon.points[i]
 
-			matrizTrans = translateAndRotate(angulo, Point(0,0,0), rotate_axis)
+				if maxX < point.x: 
+					maxX = point.x
 
-		for i in xrange(0, len(polygon.points)):
+				if minX > point.x: 
+					minX = point.x 
+
+				if maxY < point.y: 
+					maxY = point.y
+
+				if minY > point.y: 
+					minY = point.y 
+
+		largura = maxX - minX
+		altura = maxY - minY
+
+		for polygon in polygons:
+			for i in xrange(0, len(polygon.points)):
+				point = polygon.points[i]
+
+				mapX = (point.x - minX) / largura
+				mapY = (point.y - minY) / altura
+
+				polygon.texture_coords.append([mapX, mapY])
+
+	else:
+
+		polygons2 = copy.deepcopy(polygons)
+		for j in xrange(0, len(polygons2)):
+			polygon = polygons2[j]
+			selectedPolygon = polygon
+			zAxis = Point(0,0,1)
+			# Produto vetorial entre as normas
+			dot_prod = selectedPolygon.normal.dotProd(zAxis)
+			aux = dot_prod/selectedPolygon.normal.len()*zAxis.len()
+			# Define angulo de abertura
+			angulo = math.degrees(math.acos(aux))
+
 			if angulo != 0 and angulo != 180:
-				vertice_matrix = [polygon.points[i].x,polygon.points[i].y,polygon.points[i].z, 1]
-				result_matrix = dot(matrizTrans, vertice_matrix).tolist()[0] 
-				polygon.points[i].x = result_matrix[0]
-				polygon.points[i].y = result_matrix[1]
-				polygon.points[i].z = result_matrix[2]
+				rotate_axis = selectedPolygon.normal.crossProd(zAxis)
 
-			point = polygon.points[i]
+				matrizTrans = translateAndRotate(angulo, Point(0,0,0), rotate_axis)
 
-			if maxX < point.x: 
-				maxX = point.x
+			for i in xrange(0, len(polygon.points)):
+				if angulo != 0 and angulo != 180:
+					vertice_matrix = [polygon.points[i].x,polygon.points[i].y,polygon.points[i].z, 1]
+					result_matrix = dot(matrizTrans, vertice_matrix).tolist()[0] 
+					polygon.points[i].x = result_matrix[0]
+					polygon.points[i].y = result_matrix[1]
+					polygon.points[i].z = result_matrix[2]
 
-			if minX > point.x: 
-				minX = point.x 
+				point = polygon.points[i]
 
-			if maxY < point.y: 
-				maxY = point.y
+				if maxX < point.x: 
+					maxX = point.x
 
-			if minY > point.y: 
-				minY = point.y 
+				if minX > point.x: 
+					minX = point.x 
 
-	largura = maxX - minX
-	altura = maxY - minY
+				if maxY < point.y: 
+					maxY = point.y
 
-	for j in xrange(0, len(polygons2)):
-		polygon = polygons2[j]
-		for i in xrange(0, len(polygon.points)):
-			point = polygon.points[i]
+				if minY > point.y: 
+					minY = point.y 
 
-			mapX = (point.x - minX) / largura
-			mapY = (point.y - minY) / altura
+		largura = maxX - minX
+		altura = maxY - minY
 
-			polygons[j].texture_coords.append([mapX, mapY])
+		for j in xrange(0, len(polygons2)):
+			polygon = polygons2[j]
+			for i in xrange(0, len(polygon.points)):
+				point = polygon.points[i]
 
+				mapX = (point.x - minX) / largura
+				mapY = (point.y - minY) / altura
+
+				polygons[j].texture_coords.append([mapX, mapY])
 	return
