@@ -226,30 +226,36 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	# Define angulo de abertura
 	angulo = math.degrees(math.acos(aux))
 	
-	if not globalSense:
-		globalSense = sense
-	elif animateProgress[index] >= angulo:
-		globalSense = -globalSense
-	print(globalSense)
+	# if not globalSense:
+	# 	globalSense = sense
+	# elif animateProgress[index] >= angulo:
+	# 	globalSense = -globalSense
+	# print(globalSense)
+
 	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO SEGUNDO ARGUMENTO
-	speed = math.ceil(globalSense)
+	# speed = globalSense
+	speed = 2
 	if len(sys.argv) >= 3:
 		speed = float(sys.argv[2])
 
 	### PREPARA SETORES DE b PARA ROTACIONAR FRACIONADO ATE O ANGULO FINAL COMO SE FOSSE ANIMADO
 	b=0
-	if animateProgress[index] >= angulo:
-		b = 0
-		isSolidOpen = True
-		animateProgress = [0] * len(polygons)
-		# print(isSolidOpen)
-		# print("b = "+str(b))
-		# exit()
-	elif animateProgress[index] >=0:
-		b = -(speed)
-		animateProgress[index] += speed
+	if isSolidOpen:
+		b = speed
+		animateProgress[index] -= speed
+		if animateProgress[index] <=0:
+			selectedFace = False 
+	if not isSolidOpen:
+		if animateProgress[index] >= angulo:
+			b = 0
+			isSolidOpen = True
+		elif animateProgress[index] >=0:
+			b = -(speed)
+			# if speed<0:
+			# 	speed = -speed
+			animateProgress[index] += speed
+	print(b)
 	
-	print(animateProgress)
 	#animacao para abrir o solido
 	# if animateProgress[index] < angulo and not isSolidOpen:
 	# 	b = -(angulo)
@@ -291,21 +297,6 @@ def animateFrom(root):
 	
 	for node in tree['order']:
 		parent = tree['parent'][node]	
-		p_axis = polygons[parent].normal.crossProd(polygons[node].normal)
-		if parent == root:
-			vertex = vertexs[polygons[parent].edges[node][0]]
-			p_ref = Point(vertex[0],vertex[1],vertex[2])
-			rotateFace(polygons[node], polygons[parent], node, p_ref, p_axis)
-		else:
-			aux = polygons[parent].points_indexes.index(polygons[parent].edges[node][0])
-			vertex = polygons[parent].points[aux]			
-			p_ref = Point(vertex[0],vertex[1],vertex[2])
-			rotateFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
-
-def closeFrom(root):
-	tree = graph.breadth_first_search(root)
-	for node in tree['order']:
-		parent = tree['parent'][node]		
 		p_axis = polygons[parent].normal.crossProd(polygons[node].normal)
 		if parent == root:
 			vertex = vertexs[polygons[parent].edges[node][0]]
