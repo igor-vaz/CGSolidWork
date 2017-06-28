@@ -62,7 +62,7 @@ zoom = -8
 imageID = None
 isSolidOpen = False
 globalSense = None
-
+count = 0
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
 	global g_quadratic, vertexs, edges, polygons, graph, animateProgress, colors, imageID
@@ -217,7 +217,7 @@ def DrawPolygon():
 	return
 
 def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrixTransParent = None):	
-	global isSolidOpen, animateProgress,selectedFace, polygons, globalSense
+	global isSolidOpen, animateProgress,selectedFace, polygons, count
 	sense = rotate_axis.tripleProd(polygon_origin.original_normal,polygon.original_normal)
 
 	# Produto vetorial entre as normas
@@ -226,14 +226,6 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	# Define angulo de abertura
 	angulo = math.degrees(math.acos(aux))
 	
-	# if not globalSense:
-	# 	globalSense = sense
-	# elif animateProgress[index] >= angulo:
-	# 	globalSense = -globalSense
-	# print(globalSense)
-
-	### DEFINE VELOCIDADE DE ABERTURA SE PASSADO SEGUNDO ARGUMENTO
-	# speed = globalSense
 	speed = 2
 	if len(sys.argv) >= 3:
 		speed = float(sys.argv[2])
@@ -243,44 +235,28 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 	if isSolidOpen:
 		b = speed
 		animateProgress[index] -= speed
-		if animateProgress[index] <=0:
-			selectedFace = False 
+		if animateProgress[index] <= 0:
+			count+=1
+			if count == len(polygons)-1:
+				selectedFace = False 
+		print(count)
 	if not isSolidOpen:
-		if animateProgress[index] >= angulo:
-			b = 0
-			isSolidOpen = True
+		if animateProgress[index] >= angulo-speed:
+			# b = 0
+			count+=1
+			if count == len(polygons)-1:
+				isSolidOpen = True
+				count=0
 		elif animateProgress[index] >=0:
 			b = -(speed)
-			# if speed<0:
-			# 	speed = -speed
 			animateProgress[index] += speed
-	print(b)
-	
-	#animacao para abrir o solido
-	# if animateProgress[index] < angulo and not isSolidOpen:
-	# 	b = -(angulo)
-	# 	animateProgress[index] += angulo
-	# #animacao para fechar o solido(EM TEORIA)
-	# elif animateProgress[index] > 0 and isSolidOpen:
-	# 	b = -angulo
-	# 	animateProgress[index] -= angulo
-	# #Solido fechado e face selecionada apagada
-	# # elif animateProgress[index] < speed and isSolidOpen:
-	# # 	isSolidOpen = False
-	# # 	selectedFace = False
-	# #Solido aberto
-	# elif animateProgress[index] >= angulo:
-	# 	b = 0
-	# 	isSolidOpen = True
+	# print(b)
 
 
 	### PREPARA MATRIZ DE TRANSFORMACAO
 	matrizTrans = translateAndRotate(b, rotate_point, rotate_axis)
-	if matrixTransParent is not None and not isSolidOpen:
+	if matrixTransParent is not None:
 		matrizTrans = dot(matrizTrans, matrixTransParent)
-	elif matrixTransParent is not None and isSolidOpen:
-		print("aasdada ")
-		matrizTrans = dot(matrizTrans, inv(matrixTransParent))
 
 	polygon.matrix = matrizTrans
 	### TRANSFORMACOES APLICADAS EM CADA VERTICE
@@ -294,7 +270,7 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 
 def animateFrom(root):
 	tree = graph.breadth_first_search(root)
-	
+
 	for node in tree['order']:
 		parent = tree['parent'][node]	
 		p_axis = polygons[parent].normal.crossProd(polygons[node].normal)
@@ -309,7 +285,7 @@ def animateFrom(root):
 			rotateFace(polygons[node], polygons[parent],node, p_ref, p_axis, polygons[parent].matrix)
 
 def Draw ():
-	global zoom, isSolidOpen,selectedFace
+	global zoom, isSolidOpen,selectedFace 
 
 	if len(polygons[0].texture_coords) > 0:
 		setupTexture()
@@ -432,7 +408,7 @@ def flatMapSize():
 		if angulo != 0 and angulo != 180:
 			rotate_axis = selectedPolygon.normal.crossProd(zAxis)
 
-			matrizTrans = translateAndRotate(angulo, Point(0,0.0,0), rotate_axis)
+			matrizTrans = translateAndRotate(angulo, Point(0,0,0), rotate_axis)
 
 		for i in xrange(0, len(polygon.points)):
 			if angulo != 0 and angulo != 180:
