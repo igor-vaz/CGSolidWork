@@ -239,18 +239,19 @@ def rotateFace(polygon, polygon_origin, index, rotate_point, rotate_axis, matrix
 			count+=1
 			if count == len(polygons)-1:
 				selectedFace = False 
-		print(count)
 	if not isSolidOpen:
 		if animateProgress[index] >= angulo-speed:
-			# b = 0
 			count+=1
 			if count == len(polygons)-1:
 				isSolidOpen = True
 				count=0
 		elif animateProgress[index] >=0:
-			b = -(speed)
-			animateProgress[index] += speed
-	# print(b)
+			if animateProgress[index] + speed > angulo:
+				b = -(angulo - animateProgress[index])
+			else:
+				b = -(speed)
+			animateProgress[index] -= b
+
 
 
 	### PREPARA MATRIZ DE TRANSFORMACAO
